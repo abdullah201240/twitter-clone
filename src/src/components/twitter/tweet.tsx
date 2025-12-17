@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import { Button } from "../ui/button"
 import {
@@ -11,6 +12,7 @@ import {
 import { Badge } from "../ui/badge"
 import { CommentDialog } from "./comment-dialog"
 import { useAppSelector } from "../../store/hooks"
+import { Murmur, murmurAPI } from "../../lib/murmur-api"
 
 interface Comment {
   id: number
@@ -22,8 +24,10 @@ interface Comment {
 }
 
 export function Tweet({
+  id,
   username = "User Name",
   handle = "@username",
+  avatar,
   timestamp = "2h",
   content = "This is a sample tweet content. Twitter clones are fun to build with shadcn UI components!",
   image,
@@ -31,10 +35,13 @@ export function Tweet({
   retweets = 5,
   likes = 50,
   views = 1000,
-  isVerified = true
+  isVerified = true,
+  murmur
 }: {
+  id?: string
   username?: string
   handle?: string
+  avatar?: string | null
   timestamp?: string
   content?: string
   image?: string
@@ -43,7 +50,14 @@ export function Tweet({
   likes?: number
   views?: number
   isVerified?: boolean
+  murmur?: Murmur
 }) {
+  const navigate = useNavigate()
+  const handleTweetClick = () => {
+    if (id) {
+      navigate(`/post/${id}`, { state: { murmur } })
+    }
+  }
   const user = useAppSelector((state) => state.auth.user)
   const [isLiked, setIsLiked] = useState(false)
   const [likeCount, setLikeCount] = useState(likes)
@@ -53,14 +67,33 @@ export function Tweet({
   const [commentCount, setCommentCount] = useState(comments)
   const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false)
 
-  const handleLike = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (isLiked) {
-      setLikeCount(prev => prev - 1)
-    } else {
-      setLikeCount(prev => prev + 1)
+  // Load like status on mount
+  useEffect(() => {
+    if (!id || !user) return
+    loadLikeStatus()
+  }, [id, user])
+
+  const loadLikeStatus = async () => {
+    if (!id || !user) return
+    try {
+      const status = await murmurAPI.getLikeStatus(id)
+      setIsLiked(status.isLiked)
+    } catch (error) {
+      console.error('Error loading like status:', error)
     }
-    setIsLiked(!isLiked)
+  }
+
+  const handleLike = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!id || !user) return
+
+    try {
+      const result = await murmurAPI.toggleLike(id)
+      setIsLiked(result.liked)
+      setLikeCount(result.likeCount)
+    } catch (error) {
+      console.error('Error toggling like:', error)
+    }
   }
 
   const handleRetweet = (e: React.MouseEvent) => {
@@ -78,17 +111,24 @@ export function Tweet({
     setIsCommentDialogOpen(true)
   }
 
-  const handleAddComment = (commentContent: string) => {
-    const newComment: Comment = {
-      id: Date.now(),
-      username: user?.name || "User",
-      handle: user?.handle || "@user",
-      content: commentContent,
-      timestamp: "Just now",
-      isVerified: false
+  const handleAddComment = async (commentContent: string) => {
+    if (!id || !user) return
+
+    try {
+      const newComment = await murmurAPI.createComment(id, commentContent)
+      const comment: Comment = {
+        id: Date.now(),
+        username: newComment.user.name,
+        handle: `@${newComment.user.username}`,
+        content: newComment.content,
+        timestamp: "Just now",
+        isVerified: false
+      }
+      setCommentsList(prev => [comment, ...prev])
+      setCommentCount(prev => prev + 1)
+    } catch (error) {
+      console.error('Error creating comment:', error)
     }
-    setCommentsList(prev => [newComment, ...prev])
-    setCommentCount(prev => prev + 1)
   }
 
   const formatNumber = (num: number) => {
@@ -99,12 +139,12 @@ export function Tweet({
 
   return (
     <>
-      <div className="border-b p-3 md:p-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors cursor-pointer">
+      <div className="border-b p-3 md:p-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors cursor-pointer" onClick={handleTweetClick}>
         <div className="flex gap-2 md:gap-4">
           <div className="flex-shrink-0">
             <Avatar className="h-10 w-10 md:h-12 md:w-12">
-              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-              <AvatarFallback>CN</AvatarFallback>
+              <AvatarImage src={avatar || undefined} alt={username} />
+              <AvatarFallback>{username.charAt(0).toUpperCase()}</AvatarFallback>
             </Avatar>
           </div>
           <div className="flex-1 min-w-0">

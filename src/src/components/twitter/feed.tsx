@@ -1,68 +1,72 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { Tweet } from "./tweet"
 import { Loader2 } from "lucide-react"
+import { murmurAPI, Murmur, TimelineResponse } from "../../lib/murmur-api"
 
 type FeedType = 'for-you' | 'following'
 
-// Mock data generator
-const generateTweets = (count: number, startIndex: number, type: FeedType) => {
-    return Array.from({ length: count }).map((_, i) => ({
-        id: `${type}-${startIndex + i}`,
-        username: type === 'for-you' ? `User ${startIndex + i + 1}` : `Followed User ${startIndex + i + 1}`,
-        handle: `@${type === 'for-you' ? 'user' : 'followed_user'}${startIndex + i + 1}`,
-        timestamp: `${Math.floor(Math.random() * 24) + 1}h`,
-        content: type === 'for-you'
-            ? `This is a "For You" tweet #${startIndex + i + 1}. Algorithms are cool! #fyp #react`
-            : `This is a "Following" tweet #${startIndex + i + 1}. From someone you follow! #following #friends`,
-        comments: Math.floor(Math.random() * 50),
-        retweets: Math.floor(Math.random() * 20),
-        likes: Math.floor(Math.random() * 100),
-        views: Math.floor(Math.random() * 50000) + 1000,
-        isVerified: Math.random() > 0.7
-    }))
-}
-
 interface TwitterFeedProps {
     type: FeedType
-    newPost?: any
+    newPost?: Murmur
 }
 
 export function TwitterFeed({ type, newPost }: TwitterFeedProps) {
-    const [tweets, setTweets] = useState<any[]>([])
+    const [tweets, setTweets] = useState<Murmur[]>([])
     const [isLoading, setIsLoading] = useState(false)
+    const [nextCursor, setNextCursor] = useState<string | null>(null)
+    const [hasMore, setHasMore] = useState(true)
     const observerTarget = useRef(null)
+    const seenIds = useRef(new Set<string>())
 
     // Handle new post
     useEffect(() => {
-        if (newPost) {
+        if (newPost && !seenIds.current.has(newPost.id)) {
             setTweets(prev => [newPost, ...prev])
+            seenIds.current.add(newPost.id)
         }
     }, [newPost])
 
-    const loadMoreTweets = useCallback(() => {
-        if (isLoading) return
+    const loadMoreTweets = useCallback(async () => {
+        if (isLoading || !hasMore) return
 
         setIsLoading(true)
-        // Simulate network delay
-        setTimeout(() => {
-            const newTweets = generateTweets(20, tweets.length, type)
+        try {
+            const limit = 10
+            let response: TimelineResponse
+
+            if (type === 'for-you') {
+                response = await murmurAPI.getTimeline(limit, nextCursor || undefined)
+            } else {
+                response = await murmurAPI.getFeed(limit, nextCursor || undefined)
+            }
+
+            // Filter out duplicates
+            const newTweets = response.data.filter(t => !seenIds.current.has(t.id))
+            newTweets.forEach(t => seenIds.current.add(t.id))
+
             setTweets(prev => [...prev, ...newTweets])
+            setNextCursor(response.nextCursor)
+            setHasMore(response.nextCursor !== null)
+        } catch (error) {
+            console.error('Error loading tweets:', error)
+            setHasMore(false)
+        } finally {
             setIsLoading(false)
-        }, 800)
-    }, [tweets.length, isLoading, type])
+        }
+    }, [isLoading, hasMore, nextCursor, type])
 
     // Initial load
     useEffect(() => {
-        if (tweets.length === 0) {
+        if (tweets.length === 0 && hasMore) {
             loadMoreTweets()
         }
-    }, []) // Run once on mount
+    }, [type]) // Reset when type changes
 
     // Infinite scroll observer
     useEffect(() => {
         const observer = new IntersectionObserver(
             entries => {
-                if (entries[0].isIntersecting && !isLoading) {
+                if (entries[0].isIntersecting && !isLoading && hasMore) {
                     loadMoreTweets()
                 }
             },
@@ -78,14 +82,29 @@ export function TwitterFeed({ type, newPost }: TwitterFeedProps) {
                 observer.unobserve(observerTarget.current)
             }
         }
-    }, [loadMoreTweets, isLoading])
+    }, [loadMoreTweets, isLoading, hasMore])
 
     return (
         <div>
-            {tweets.map((tweet) => (
+            {tweets.map((murmur) => (
                 <Tweet
-                    key={tweet.id}
-                    {...tweet}
+                    key={murmur.id}
+                    id={murmur.id}
+                    username={murmur.user.name}
+                    handle={`@${murmur.user.username}`}
+                    avatar={murmur.user.avatar}
+                    timestamp={new Date(murmur.createdAt).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric'
+                    })}
+                    content={murmur.content}
+                    image={murmur.mediaUrl || undefined}
+                    comments={murmur.replyCount}
+                    retweets={murmur.repostCount}
+                    likes={murmur.likeCount}
+                    views={0}
+                    isVerified={false}
+                    murmur={murmur}
                 />
             ))}
 

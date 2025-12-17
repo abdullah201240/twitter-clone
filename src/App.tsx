@@ -11,6 +11,7 @@ import { NotificationsPage } from './src/pages/notifications'
 import { MessagesPage } from './src/pages/messages'
 import { BookmarksPage } from './src/pages/bookmarks'
 import { ProfilePage } from './src/pages/profile'
+import { PostDetailPage } from './src/pages/post-detail'
 import { LoginPage } from './src/pages/login'
 import { SignupPage } from './src/pages/signup'
 
@@ -40,6 +41,7 @@ function AppContent() {
           <Route path="bookmarks" element={<BookmarksPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="profile/:userId" element={<ProfilePage />} />
+          <Route path="post/:postId" element={<PostDetailPage />} />
         </Route>
       </Routes>
     </Router>

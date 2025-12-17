@@ -5,8 +5,15 @@ import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { User } from './entities/user.entity';
+import { Murmur } from './entities/murmur.entity';
+import { Feed } from './entities/feed.entity';
+import { Like } from './entities/like.entity';
+import { Comment } from './entities/comment.entity';
+import { Follow } from './entities/follow.entity';
 import { AuthModule } from './auth/auth.module';
 import { ProfileModule } from './profile/profile.module';
+import { MurmurModule } from './murmur/murmur.module';
+import { SearchModule } from './search/search.module';
 import { LoggerMiddleware } from './logger.middleware';
 import { UploadCorsMiddleware } from './upload/upload.middleware';
 
@@ -36,7 +43,7 @@ import { UploadCorsMiddleware } from './upload/upload.middleware';
       username: process.env.DB_USERNAME || 'docker',
       password: process.env.DB_PASSWORD || 'docker',
       database: process.env.DB_DATABASE || 'test',
-      entities: [User],
+      entities: [User, Murmur, Feed, Like, Comment, Follow],
       migrations: ['dist/migrations/*.js'],
       migrationsTableName: 'migrations',
       migrationsRun: true, 
@@ -46,6 +53,8 @@ import { UploadCorsMiddleware } from './upload/upload.middleware';
     TypeOrmModule.forFeature([User]),
     AuthModule,
     ProfileModule,
+    MurmurModule,
+    SearchModule,
   ],
   controllers: [AppController],
   providers: [AppService],

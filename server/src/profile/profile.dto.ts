@@ -34,5 +34,6 @@ export class ProfileResponseDto {
   coverImage: string | null;
   followersCount: number;
   followingCount: number;
+  murmurCount: number;
   createdAt: Date;
 }

@@ -2,28 +2,18 @@ import { useState } from "react"
 import { TweetCompose } from "../components/twitter/tweet-compose"
 import { TwitterFeed } from "../components/twitter/feed"
 import { useAppSelector } from "../store/hooks"
+import { Murmur } from "../lib/murmur-api"
 
 type FeedType = 'for-you' | 'following'
 
 export function HomePage() {
     const [activeTab, setActiveTab] = useState<FeedType>('for-you')
-    const [latestTweet, setLatestTweet] = useState<any>(null)
+    const [latestTweet, setLatestTweet] = useState<Murmur | null>(null)
     const user = useAppSelector((state) => state.auth.user)
 
     const handlePost = (content: string, image?: string) => {
-        const newTweet = {
-            id: Date.now(),
-            username: user?.name || "User",
-            handle: `@${user?.username || 'user'}`,
-            timestamp: "Just now",
-            content: content,
-            image: image,
-            comments: 0,
-            retweets: 0,
-            likes: 0,
-            isVerified: false
-        }
-        setLatestTweet(newTweet)
+        // We don't need to do anything here since the feed will refresh automatically
+        // The new post will be loaded from the API when the feed refreshes
     }
 
     return (

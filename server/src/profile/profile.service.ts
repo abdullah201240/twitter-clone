@@ -2,6 +2,9 @@ import { Injectable, BadRequestException, NotFoundException, Logger } from '@nes
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
+import { MurmurService } from '../murmur/murmur.service';
+import { FollowService } from './follow.service';
+import { SearchService } from '../search/search.service';
 import { UpdateProfileDto, ProfileResponseDto } from './profile.dto';
 import { UploadService } from '../upload/upload.service';
 
@@ -12,6 +15,9 @@ export class ProfileService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly murmurService: MurmurService,
+    private readonly followService: FollowService,
+    private readonly searchService: SearchService,
     private readonly uploadService: UploadService,
   ) {}
 
@@ -27,7 +33,7 @@ export class ProfileService {
     }
 
     this.logger.log(`Successfully fetched profile for user: ${userId}`);
-    return this.mapToProfileResponse(user);
+    return await this.mapToProfileResponse(user);
   }
 
   async updateProfile(userId: string, updateData: UpdateProfileDto): Promise<ProfileResponseDto> {
@@ -48,8 +54,10 @@ export class ProfileService {
     if (updateData.website !== undefined) user.website = updateData.website;
 
     await this.userRepository.save(user);
+    // Index user in Elasticsearch
+    await this.searchService.indexUser(user);
     this.logger.log(`Successfully updated profile for user: ${userId}`);
-    return this.mapToProfileResponse(user);
+    return await this.mapToProfileResponse(user);
   }
 
   async uploadAvatar(userId: string, file: Express.Multer.File): Promise<ProfileResponseDto> {
@@ -79,9 +87,10 @@ export class ProfileService {
     // Set new avatar
     user.avatar = this.uploadService.getPublicUrl(file.filename);
     await this.userRepository.save(user);
-
+    // Index user in Elasticsearch
+    await this.searchService.indexUser(user);
     this.logger.log(`Successfully uploaded avatar for user: ${userId}`);
-    return this.mapToProfileResponse(user);
+    return await this.mapToProfileResponse(user);
   }
 
   async uploadCoverImage(userId: string, file: Express.Multer.File): Promise<ProfileResponseDto> {
@@ -111,12 +120,13 @@ export class ProfileService {
     // Set new cover image
     user.coverImage = this.uploadService.getPublicUrl(file.filename);
     await this.userRepository.save(user);
-
+    // Index user in Elasticsearch
+    await this.searchService.indexUser(user);
     this.logger.log(`Successfully uploaded cover image for user: ${userId}`);
-    return this.mapToProfileResponse(user);
+    return await this.mapToProfileResponse(user);
   }
 
-  private mapToProfileResponse(user: User): ProfileResponseDto {
+  private async mapToProfileResponse(user: User): Promise<ProfileResponseDto> {
     // Convert relative paths to full URLs if needed
     let avatarUrl = user.avatar;
     let coverImageUrl = user.coverImage;
@@ -137,6 +147,9 @@ export class ProfileService {
       }
     }
     
+    // Get murmur count
+    const murmurCount = await this.murmurService.getMurmurCountByUser(user.id);
+    
     return {
       id: user.id,
       name: user.name,
@@ -149,6 +162,7 @@ export class ProfileService {
       coverImage: coverImageUrl || null,
       followersCount: user.followersCount || 0,
       followingCount: user.followingCount || 0,
+      murmurCount: murmurCount,
       createdAt: user.createdAt,
     };
   }

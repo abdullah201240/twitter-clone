@@ -2,14 +2,18 @@ import { useState, useRef } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import { Button } from "../ui/button"
 import { Textarea } from "../ui/textarea"
+import { Alert, AlertTitle, AlertDescription } from "../ui/alert"
 import { useAppSelector } from "../../store/hooks"
+import { murmurAPI } from "../../lib/murmur-api"
 import {
   Image as ImageIcon,
   Smile,
   Calendar,
   MapPin,
   BarChart2,
-  X
+  X,
+  CheckCircle,
+  AlertCircle,
 } from "lucide-react"
 
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
@@ -26,14 +30,60 @@ interface TweetComposeProps {
 export function TweetCompose({ onPost }: TweetComposeProps) {
   const [content, setContent] = useState("")
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const user = useAppSelector((state) => state.auth.user)
+  const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [isPosting, setIsPosting] = useState(false)
 
-  const handlePost = () => {
-    if ((content.trim() || imagePreview) && onPost) {
-      onPost(content, imagePreview || undefined)
+  const handlePost = async () => {
+    if (!content.trim() && !imageFile) {
+      setAlert({ type: 'error', message: 'Please enter some content or select an image' })
+      return
+    }
+
+    setIsPosting(true)
+    try {
+      let mediaUrl: string | undefined = uploadedImageUrl || undefined
+
+      // If there's an image file that hasn't been uploaded yet, upload it
+      if (imageFile && !uploadedImageUrl) {
+        try {
+          const uploadResponse = await murmurAPI.uploadImage(imageFile)
+          mediaUrl = uploadResponse.url
+        } catch (uploadError) {
+          console.error('Error uploading image:', uploadError)
+          setAlert({ type: 'error', message: 'Failed to upload image' })
+          setIsPosting(false)
+          return
+        }
+      }
+
+      // Create the murmur with or without the image
+      const murmur = await murmurAPI.createMurmur({
+        content: content.trim(),
+        mediaUrl,
+      })
+
+      if (onPost) {
+        onPost(content, mediaUrl)
+      }
+
+      // Reset form and show success alert
       setContent("")
       setImagePreview(null)
+      setImageFile(null)
+      setUploadedImageUrl(null)
+      setAlert({ type: 'success', message: 'Post created successfully!' })
+      
+      // Auto-hide success alert after 3 seconds
+      setTimeout(() => setAlert(null), 3000)
+    } catch (error) {
+      console.error('Error posting murmur:', error)
+      setAlert({ type: 'error', message: 'Failed to create post. Please try again.' })
+    } finally {
+      setIsPosting(false)
     }
   }
 
@@ -44,6 +94,19 @@ export function TweetCompose({ onPost }: TweetComposeProps) {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        setAlert({ type: 'error', message: 'Image size must be less than 5MB' })
+        return
+      }
+
+      // Validate file type
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+        setAlert({ type: 'error', message: 'Only JPEG, PNG, and WebP images are allowed' })
+        return
+      }
+
+      setImageFile(file)
       const reader = new FileReader()
       reader.onloadend = () => {
         setImagePreview(reader.result as string)
@@ -54,6 +117,8 @@ export function TweetCompose({ onPost }: TweetComposeProps) {
 
   const removeImage = () => {
     setImagePreview(null)
+    setImageFile(null)
+    setUploadedImageUrl(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
     }
@@ -65,6 +130,19 @@ export function TweetCompose({ onPost }: TweetComposeProps) {
 
   return (
     <div className="border-b p-4">
+      {alert && (
+        <div className="mb-4">
+          <Alert variant={alert.type === 'success' ? 'success' : 'destructive'}>
+            {alert.type === 'success' ? (
+              <CheckCircle className="h-4 w-4" />
+            ) : (
+              <AlertCircle className="h-4 w-4" />
+            )}
+            <AlertTitle>{alert.type === 'success' ? 'Success' : 'Error'}</AlertTitle>
+            <AlertDescription>{alert.message}</AlertDescription>
+          </Alert>
+        </div>
+      )}
       <div className="flex">
         <div className="mr-4 flex-shrink-0">
           <Avatar>
@@ -129,11 +207,11 @@ export function TweetCompose({ onPost }: TweetComposeProps) {
               </Button>
             </div>
             <Button
-              className="px-4 py-2 font-bold rounded-full bg-sky-500 hover:bg-sky-600"
+              className="px-4 py-2 font-bold rounded-full bg-sky-500 hover:bg-sky-600 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handlePost}
-              disabled={!content.trim() && !imagePreview}
+              disabled={(!content.trim() && !imagePreview) || isPosting}
             >
-              Post
+              {isPosting ? 'Posting...' : 'Post'}
             </Button>
           </div>
         </div>

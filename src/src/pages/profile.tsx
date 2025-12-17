@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from "react"
 import { Button } from "../components/ui/button"
-import { ArrowLeft, Calendar, Link as LinkIcon, MapPin, Camera } from "lucide-react"
+import { ArrowLeft, Calendar, Link as LinkIcon, MapPin, Camera, MessageCircle, Repeat, Heart, Share } from "lucide-react"
 import { useAppSelector } from "../store/hooks"
 import { useNavigate, useParams } from "react-router-dom"
 import { profileAPI, ProfileData } from "../lib/profile-api"
+import { murmurAPI, Murmur, TimelineResponse } from "../lib/murmur-api"
 import { Input } from "../components/ui/input"
 import { Textarea } from "../components/ui/textarea"
+import { FollowButton } from "../components/twitter/follow-button"
 import {
   Dialog,
   DialogContent,
@@ -19,6 +21,7 @@ export function ProfilePage() {
     const navigate = useNavigate()
     const { userId } = useParams<{ userId?: string }>()
     const [profile, setProfile] = useState<ProfileData | null>(null)
+    const [userMurmurs, setUserMurmurs] = useState<Murmur[]>([])
     const [loading, setLoading] = useState(true)
     const [isEditOpen, setIsEditOpen] = useState(false)
     const [editData, setEditData] = useState({
@@ -51,11 +54,27 @@ export function ProfilePage() {
                     location: data.location || "",
                     website: data.website || "",
                 })
+                
+                // Load user's murmurs
+                try {
+                    const response = await murmurAPI.getUserMurmurs(data.id, 10)
+                    setUserMurmurs(response.data)
+                } catch (error) {
+                    console.error('Error loading user murmurs:', error)
+                }
             } 
             // If viewing another user's profile
             else if (userId) {
                 const data = await profileAPI.getProfile(userId)
                 setProfile(data)
+                
+                // Load user's murmurs
+                try {
+                    const response = await murmurAPI.getUserMurmurs(userId, 10)
+                    setUserMurmurs(response.data)
+                } catch (error) {
+                    console.error('Error loading user murmurs:', error)
+                }
             }
             // If viewing own profile but not logged in
             else if (!currentUser) {
@@ -153,7 +172,7 @@ export function ProfilePage() {
                 </Button>
                 <div>
                     <h1 className="font-bold text-xl leading-5">{profile.name}</h1>
-                    <p className="text-gray-500 text-sm">0 posts</p>
+                    <p className="text-gray-500 text-sm">{profile.murmurCount} posts</p>
                 </div>
             </div>
 
@@ -224,6 +243,9 @@ export function ProfilePage() {
             </div>
 
             <div className="flex justify-end p-4">
+                {!isOwnProfile && (
+                    <FollowButton userId={profile.id} />
+                )}
                 {isOwnProfile && (
                     <Button variant="outline" className="rounded-full font-bold" onClick={() => setIsEditOpen(true)}>
                         Edit profile
@@ -295,9 +317,87 @@ export function ProfilePage() {
                 </div>
             </div>
 
-            <div className="p-8 text-center text-gray-500">
-                No posts yet.
-            </div>
+            {userMurmurs.length > 0 ? (
+                <div className="divide-y dark:divide-gray-800">
+                    {userMurmurs.map((murmur) => (
+                        <div key={murmur.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition">
+                            <div className="flex gap-3">
+                                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                                    {murmur.user.avatar ? (
+                                        <img 
+                                            src={murmur.user.avatar} 
+                                            alt={murmur.user.name} 
+                                            className="w-full h-full rounded-full object-cover"
+                                            onError={(e) => {
+                                                const target = e.target as HTMLImageElement;
+                                                target.style.display = 'none';
+                                                // Show the initial when image fails to load
+                                                const parent = target.parentElement;
+                                                if (parent) {
+                                                    const initialSpan = document.createElement('span');
+                                                    initialSpan.className = 'font-bold text-gray-700 dark:text-gray-300';
+                                                    initialSpan.textContent = murmur.user.name.charAt(0).toUpperCase();
+                                                    parent.appendChild(initialSpan);
+                                                }
+                                            }}
+                                        />
+                                    ) : (
+                                        <span className="font-bold text-gray-700 dark:text-gray-300">
+                                            {murmur.user.name.charAt(0).toUpperCase()}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-bold text-gray-900 dark:text-white">{murmur.user.name}</span>
+                                        <span className="text-gray-500">@{murmur.user.username}</span>
+                                        <span className="text-gray-500">·</span>
+                                        <span className="text-gray-500">
+                                            {new Date(murmur.createdAt).toLocaleDateString('en-US', {
+                                                month: 'short',
+                                                day: 'numeric'
+                                            })}
+                                        </span>
+                                    </div>
+                                    <p className="mt-1 text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
+                                        {murmur.content}
+                                    </p>
+                                    {murmur.mediaUrl && (
+                                        <div className="mt-2 max-w-lg rounded-2xl overflow-hidden border dark:border-gray-700">
+                                            <img 
+                                                src={murmur.mediaUrl} 
+                                                alt="Attachment" 
+                                                className="w-full h-auto object-contain"
+                                            />
+                                        </div>
+                                    )}
+                                    <div className="mt-3 flex gap-4 text-gray-500">
+                                        <button className="flex items-center gap-1 hover:text-sky-500 transition">
+                                            <MessageCircle className="w-4 h-4" />
+                                            <span>{murmur.replyCount}</span>
+                                        </button>
+                                        <button className="flex items-center gap-1 hover:text-green-500 transition">
+                                            <Repeat className="w-4 h-4" />
+                                            <span>{murmur.repostCount}</span>
+                                        </button>
+                                        <button className="flex items-center gap-1 hover:text-red-500 transition">
+                                            <Heart className="w-4 h-4" />
+                                            <span>{murmur.likeCount}</span>
+                                        </button>
+                                        <button className="flex items-center gap-1 hover:text-sky-500 transition">
+                                            <Share className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="p-8 text-center text-gray-500">
+                    No posts yet.
+                </div>
+            )}
 
             {/* Edit Profile Modal */}
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
