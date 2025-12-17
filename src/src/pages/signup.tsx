@@ -1,26 +1,69 @@
 import { useState } from "react"
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
-import { useAppDispatch } from "../store/hooks"
-import { signup as signupAction } from "../store/slices/authSlice"
+import { useAppDispatch, useAppSelector } from "../store/hooks"
+import { register as registerAction } from "../store/slices/authSlice"
 import { useNavigate, Link } from "react-router-dom"
 import { Label } from "../components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
 
 export function SignupPage() {
     const [name, setName] = useState("")
+    const [email, setEmail] = useState("")
     const [username, setUsername] = useState("")
+    const [password, setPassword] = useState("")
     const [month, setMonth] = useState("")
     const [day, setDay] = useState("")
     const [year, setYear] = useState("")
+    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
     const dispatch = useAppDispatch()
     const navigate = useNavigate()
+    const { loading, error } = useAppSelector((state) => state.auth)
 
-    const handleSignup = (e: React.FormEvent) => {
+    const validateForm = (): boolean => {
+        const errors: Record<string, string> = {}
+
+        if (!name.trim()) errors.name = "Name is required"
+        if (!email.trim()) errors.email = "Email is required"
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = "Invalid email format"
+
+        if (!username.trim()) errors.username = "Username is required"
+        else if (username.length < 3) errors.username = "Username must be at least 3 characters"
+        else if (username.length > 30) errors.username = "Username must not exceed 30 characters"
+
+        if (!password.trim()) errors.password = "Password is required"
+        else if (password.length < 8) errors.password = "Password must be at least 8 characters"
+        else {
+            const hasUpper = /[A-Z]/.test(password)
+            const hasLower = /[a-z]/.test(password)
+            const hasNumber = /\d/.test(password)
+            const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+            const strength = [hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean).length
+            if (strength < 3) {
+                errors.password = "Password must contain at least 3 of: uppercase, lowercase, numbers, special characters"
+            }
+        }
+
+        setValidationErrors(errors)
+        return Object.keys(errors).length === 0
+    }
+
+    const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (name && username) {
-            dispatch(signupAction({ name, username }))
+
+        if (!validateForm()) return
+
+        const result = await dispatch(
+            registerAction({
+                name: name.trim(),
+                email: email.trim(),
+                username: username.trim(),
+                password,
+            })
+        )
+
+        if (result.meta.requestStatus === 'fulfilled') {
             navigate("/")
         }
     }
@@ -40,20 +83,76 @@ export function SignupPage() {
                 <div className="max-w-sm mx-auto w-full flex-1 flex flex-col">
                     <h1 className="text-3xl font-bold mb-8">Create your account</h1>
 
+                    {error && (
+                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4 mb-6">
+                            <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
+                        </div>
+                    )}
+
                     <form onSubmit={handleSignup} className="space-y-6 flex-1">
                         <div className="space-y-4">
-                            <Input
-                                placeholder="Name"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                className="h-14 text-lg border-gray-300 dark:border-gray-700 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-md"
-                            />
-                            <Input
-                                placeholder="Phone, email, or username"
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
-                                className="h-14 text-lg border-gray-300 dark:border-gray-700 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-md"
-                            />
+                            <div>
+                                <Input
+                                    placeholder="Name"
+                                    value={name}
+                                    onChange={(e) => {
+                                        setName(e.target.value)
+                                        if (validationErrors.name) setValidationErrors({ ...validationErrors, name: "" })
+                                    }}
+                                    className="h-14 text-lg border-gray-300 dark:border-gray-700 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-md"
+                                    disabled={loading}
+                                />
+                                {validationErrors.name && (
+                                    <p className="text-red-500 text-sm mt-1">{validationErrors.name}</p>
+                                )}
+                            </div>
+                            <div>
+                                <Input
+                                    type="email"
+                                    placeholder="Email address"
+                                    value={email}
+                                    onChange={(e) => {
+                                        setEmail(e.target.value)
+                                        if (validationErrors.email) setValidationErrors({ ...validationErrors, email: "" })
+                                    }}
+                                    className="h-14 text-lg border-gray-300 dark:border-gray-700 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-md"
+                                    disabled={loading}
+                                />
+                                {validationErrors.email && (
+                                    <p className="text-red-500 text-sm mt-1">{validationErrors.email}</p>
+                                )}
+                            </div>
+                            <div>
+                                <Input
+                                    placeholder="Username"
+                                    value={username}
+                                    onChange={(e) => {
+                                        setUsername(e.target.value)
+                                        if (validationErrors.username) setValidationErrors({ ...validationErrors, username: "" })
+                                    }}
+                                    className="h-14 text-lg border-gray-300 dark:border-gray-700 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-md"
+                                    disabled={loading}
+                                />
+                                {validationErrors.username && (
+                                    <p className="text-red-500 text-sm mt-1">{validationErrors.username}</p>
+                                )}
+                            </div>
+                            <div>
+                                <Input
+                                    type="password"
+                                    placeholder="Password"
+                                    value={password}
+                                    onChange={(e) => {
+                                        setPassword(e.target.value)
+                                        if (validationErrors.password) setValidationErrors({ ...validationErrors, password: "" })
+                                    }}
+                                    className="h-14 text-lg border-gray-300 dark:border-gray-700 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-md"
+                                    disabled={loading}
+                                />
+                                {validationErrors.password && (
+                                    <p className="text-red-500 text-sm mt-1">{validationErrors.password}</p>
+                                )}
+                            </div>
                         </div>
 
                         <div className="space-y-2 pt-4">
@@ -65,7 +164,7 @@ export function SignupPage() {
                             <div className="flex gap-3 pt-2">
                                 <div className="flex-[2]">
                                     <Select value={month} onValueChange={setMonth}>
-                                        <SelectTrigger className="h-14">
+                                        <SelectTrigger className="h-14" disabled={loading}>
                                             <SelectValue placeholder="Month" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -75,7 +174,7 @@ export function SignupPage() {
                                 </div>
                                 <div className="flex-1">
                                     <Select value={day} onValueChange={setDay}>
-                                        <SelectTrigger className="h-14">
+                                        <SelectTrigger className="h-14" disabled={loading}>
                                             <SelectValue placeholder="Day" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -85,7 +184,7 @@ export function SignupPage() {
                                 </div>
                                 <div className="flex-1">
                                     <Select value={year} onValueChange={setYear}>
-                                        <SelectTrigger className="h-14">
+                                        <SelectTrigger className="h-14" disabled={loading}>
                                             <SelectValue placeholder="Year" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -100,15 +199,20 @@ export function SignupPage() {
 
                         <Button
                             type="submit"
-                            disabled={!name || !username}
+                            disabled={loading || !name || !email || !username || !password}
                             className="w-full h-12 rounded-full font-bold text-lg bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 mt-8 mb-4 disabled:opacity-50"
                         >
-                            Sign up
+                            {loading ? 'Creating account...' : 'Sign up'}
                         </Button>
                     </form>
 
                     <div className="text-center text-sm pb-4">
-                        <p className="text-gray-500">Have an account already? <Link to="/login" className="text-blue-500 cursor-pointer hover:underline">Log in</Link></p>
+                        <p className="text-gray-500">
+                            Have an account already?{' '}
+                            <Link to="/login" className="text-blue-500 cursor-pointer hover:underline">
+                                Log in
+                            </Link>
+                        </p>
                     </div>
                 </div>
             </div>

@@ -14,7 +14,7 @@ export function HomePage() {
         const newTweet = {
             id: Date.now(),
             username: user?.name || "User",
-            handle: user?.handle || "@user",
+            handle: `@${user?.username || 'user'}`,
             timestamp: "Just now",
             content: content,
             image: image,

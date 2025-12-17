@@ -1,20 +1,26 @@
 import { useState } from "react"
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
-import { useAppDispatch } from "../store/hooks"
+import { useAppDispatch, useAppSelector } from "../store/hooks"
 import { login as loginAction } from "../store/slices/authSlice"
 import { useNavigate, Link } from "react-router-dom"
 
 export function LoginPage() {
-    const [username, setUsername] = useState("")
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
     const dispatch = useAppDispatch()
     const navigate = useNavigate()
+    const { loading, error } = useAppSelector((state) => state.auth)
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (username.trim()) {
-            dispatch(loginAction(username))
-            navigate("/")
+        if (email.trim() && password.trim()) {
+            const result = await dispatch(
+                loginAction({ email: email.trim(), password })
+            )
+            if (result.meta.requestStatus === 'fulfilled') {
+                navigate("/")
+            }
         }
     }
 
@@ -30,28 +36,61 @@ export function LoginPage() {
                     <h1 className="text-3xl font-bold tracking-tight">Sign in to X</h1>
                 </div>
 
+                {error && (
+                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4">
+                        <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
+                    </div>
+                )}
+
                 <form onSubmit={handleLogin} className="space-y-4">
                     <div className="space-y-2">
                         <Input
-                            placeholder="Phone, email, or username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
+                            type="email"
+                            placeholder="Email address"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                             className="h-12 text-lg"
                             autoFocus
+                            disabled={loading}
                         />
                     </div>
 
-                    <Button type="submit" className="w-full h-10 rounded-full font-bold text-md bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200">
-                        Next
+                    <div className="space-y-2">
+                        <Input
+                            type="password"
+                            placeholder="Password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="h-12 text-lg"
+                            disabled={loading}
+                        />
+                    </div>
+
+                    <Button
+                        type="submit"
+                        disabled={loading || !email || !password}
+                        className="w-full h-10 rounded-full font-bold text-md bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 disabled:opacity-50"
+                    >
+                        {loading ? 'Signing in...' : 'Next'}
                     </Button>
 
-                    <Button variant="outline" type="button" className="w-full h-10 rounded-full font-bold text-md">
+                    <Button
+                        variant="outline"
+                        type="button"
+                        disabled={loading}
+                        className="w-full h-10 rounded-full font-bold text-md disabled:opacity-50"
+                    >
                         Forgot password?
                     </Button>
                 </form>
 
                 <div className="text-center text-sm">
-                    <p className="text-gray-500">Don't have an account? <Link to="/signup" className="text-blue-500 cursor-pointer hover:underline">Sign up</Link></p>
+                    <p className="text-gray-500">
+                        Don't have an account?{' '}
+                        <Link to="/signup" className="text-blue-500 cursor-pointer hover:underline">
+                            Sign up
+                        </Link>
+                    </p>
                 </div>
             </div>
         </div>

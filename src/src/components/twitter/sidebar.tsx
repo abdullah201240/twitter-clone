@@ -1,6 +1,6 @@
 import { Button } from "../ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
-import { NavLink } from "react-router-dom"
+import { NavLink, useNavigate } from "react-router-dom"
 import { cn } from "../../lib/utils"
 import {
   Home,
@@ -28,9 +28,11 @@ import { LogOut } from "lucide-react"
 export function Sidebar() {
   const user = useAppSelector((state) => state.auth.user)
   const dispatch = useAppDispatch()
+  const navigate = useNavigate()
 
-  const handleLogout = () => {
-    dispatch(logoutAction())
+  const handleLogout = async () => {
+    await dispatch(logoutAction())
+    navigate('/login')
   }
 
   if (!user) return null
@@ -93,12 +95,12 @@ export function Sidebar() {
           <DropdownMenuTrigger asChild>
             <div className="flex items-center p-3 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 cursor-pointer select-none justify-center lg:justify-start">
               <Avatar className="h-10 w-10">
-                <AvatarImage src={user.avatar} alt={user.handle} />
-                <AvatarFallback>{user.username[0]}</AvatarFallback>
+                <AvatarImage src={user.avatar || undefined} alt={user.username} />
+                <AvatarFallback>{user.username[0]?.toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="ml-3 hidden lg:block">
                 <p className="font-semibold text-sm">{user.name}</p>
-                <p className="text-gray-500 text-sm">{user.handle}</p>
+                <p className="text-gray-500 text-sm">@{user.username}</p>
               </div>
               <Ellipsis className="ml-auto h-5 w-5 hidden lg:block" />
             </div>
@@ -106,7 +108,7 @@ export function Sidebar() {
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-500 font-bold">
               <LogOut className="mr-2 h-4 w-4" />
-              Log out {user?.handle}
+              Log out @{user?.username}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
