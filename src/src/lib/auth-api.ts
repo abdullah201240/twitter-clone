@@ -87,7 +87,7 @@ class AuthAPI {
               throw new Error('No refresh token available');
             }
 
-            const response = await this.api.post<RefreshTokenResponse>('/auth/refresh', {
+            const response = await this.api.post<RefreshTokenResponse>('/api/auth/refresh', {
               refreshToken: this.refreshToken,
             });
 
@@ -122,14 +122,14 @@ class AuthAPI {
   }
 
   async register(data: RegisterRequest): Promise<AuthResponse> {
-    const response = await this.api.post<AuthResponse>('/auth/register', data);
+    const response = await this.api.post<AuthResponse>('/api/auth/register', data);
     this.setTokens(response.data.accessToken, response.data.refreshToken);
     this.saveTokensToStorage();
     return response.data;
   }
 
   async login(data: LoginRequest): Promise<AuthResponse> {
-    const response = await this.api.post<AuthResponse>('/auth/login', data);
+    const response = await this.api.post<AuthResponse>('/api/auth/login', data);
     this.setTokens(response.data.accessToken, response.data.refreshToken);
     this.saveTokensToStorage();
     return response.data;
@@ -137,7 +137,7 @@ class AuthAPI {
 
   async logout(): Promise<void> {
     try {
-      await this.api.post('/auth/logout');
+      await this.api.post('/api/auth/logout');
     } finally {
       this.clearTokens();
     }
@@ -148,7 +148,7 @@ class AuthAPI {
       throw new Error('No refresh token available');
     }
 
-    const response = await this.api.post<RefreshTokenResponse>('/auth/refresh', {
+    const response = await this.api.post<RefreshTokenResponse>('/api/auth/refresh', {
       refreshToken: this.refreshToken,
     });
 

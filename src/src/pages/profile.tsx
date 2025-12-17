@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "../components/ui/button"
 import { ArrowLeft, Calendar, Link as LinkIcon, MapPin, Camera } from "lucide-react"
 import { useAppSelector } from "../store/hooks"
@@ -77,7 +77,7 @@ export function ProfilePage() {
         }
     }
 
-    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleAvatarUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
 
@@ -90,9 +90,9 @@ export function ProfilePage() {
         } finally {
             setUploading(false)
         }
-    }
+    }, [])
 
-    const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleCoverUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
 
@@ -105,7 +105,7 @@ export function ProfilePage() {
         } finally {
             setUploading(false)
         }
-    }
+    }, [])
 
     const handleSaveProfile = async () => {
         try {
@@ -154,7 +154,15 @@ export function ProfilePage() {
             {/* Cover Image */}
             <div className="relative h-48 bg-gray-200 dark:bg-gray-800 w-full group cursor-pointer">
                 {profile.coverImage ? (
-                    <img src={profile.coverImage} alt="Cover" className="w-full h-full object-cover" />
+                    <img 
+                        src={profile.coverImage} 
+                        alt="Cover" 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                        }}
+                    />
                 ) : (
                     <div className="w-full h-full bg-gradient-to-r from-blue-400 to-purple-500" />
                 )}
@@ -178,7 +186,15 @@ export function ProfilePage() {
                     <div className="relative w-32 h-32 group/avatar">
                         <div className="w-32 h-32 rounded-full bg-black border-4 border-white dark:border-black p-1 flex items-center justify-center">
                             {profile.avatar ? (
-                                <img src={profile.avatar} alt="Profile" className="w-full h-full rounded-full object-cover" />
+                                <img 
+                                    src={profile.avatar} 
+                                    alt="Profile" 
+                                    className="w-full h-full rounded-full object-cover"
+                                    onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                    }}
+                                />
                             ) : (
                                 <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-3xl font-bold text-white">
                                     {profile.name.charAt(0)?.toUpperCase()}

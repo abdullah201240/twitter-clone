@@ -117,6 +117,26 @@ export class ProfileService {
   }
 
   private mapToProfileResponse(user: User): ProfileResponseDto {
+    // Convert relative paths to full URLs if needed
+    let avatarUrl = user.avatar;
+    let coverImageUrl = user.coverImage;
+    
+    // If avatar is a relative path, convert to full URL
+    if (avatarUrl && !avatarUrl.startsWith('http')) {
+      const filename = this.uploadService.extractFilenameFromUrl(avatarUrl);
+      if (filename) {
+        avatarUrl = this.uploadService.getFileUrl(filename);
+      }
+    }
+    
+    // If coverImage is a relative path, convert to full URL
+    if (coverImageUrl && !coverImageUrl.startsWith('http')) {
+      const filename = this.uploadService.extractFilenameFromUrl(coverImageUrl);
+      if (filename) {
+        coverImageUrl = this.uploadService.getFileUrl(filename);
+      }
+    }
+    
     return {
       id: user.id,
       name: user.name,
@@ -125,8 +145,8 @@ export class ProfileService {
       bio: user.bio || null,
       location: user.location || null,
       website: user.website || null,
-      avatar: user.avatar || null,
-      coverImage: user.coverImage || null,
+      avatar: avatarUrl || null,
+      coverImage: coverImageUrl || null,
       followersCount: user.followersCount || 0,
       followingCount: user.followingCount || 0,
       createdAt: user.createdAt,

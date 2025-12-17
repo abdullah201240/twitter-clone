@@ -13,6 +13,7 @@ import * as bcrypt from 'bcrypt';
 import { User } from '../entities/user.entity';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { UploadService } from '../upload/upload.service';
 
 export interface AuthResponse {
   accessToken: string;
@@ -37,6 +38,7 @@ export class AuthService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
+    private readonly uploadService: UploadService,
   ) {}
 
   async register(registerDto: RegisterDto): Promise<AuthResponse> {
@@ -213,6 +215,15 @@ export class AuthService {
     accessToken: string,
     refreshToken: string,
   ): AuthResponse {
+    // Convert relative avatar path to full URL if needed
+    let avatarUrl = user.avatar;
+    if (avatarUrl && !avatarUrl.startsWith('http')) {
+      const filename = this.uploadService.extractFilenameFromUrl(avatarUrl);
+      if (filename) {
+        avatarUrl = this.uploadService.getFileUrl(filename);
+      }
+    }
+    
     return {
       accessToken,
       refreshToken,
@@ -221,7 +232,7 @@ export class AuthService {
         name: user.name,
         email: user.email,
         username: user.username,
-        avatar: user.avatar,
+        avatar: avatarUrl,
       },
     };
   }

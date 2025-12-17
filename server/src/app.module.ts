@@ -25,9 +25,9 @@ import { LoggerMiddleware } from './logger.middleware';
       entities: [User],
       migrations: ['dist/migrations/*.js'],
       migrationsTableName: 'migrations',
-      migrationsRun: true, // Auto-run migrations on app start
-      synchronize: false, // Disabled for production safety - use migrations instead
-      logging: true,
+      migrationsRun: true, 
+      synchronize: false,
+      logging: false,
     }),
     TypeOrmModule.forFeature([User]),
     AuthModule,

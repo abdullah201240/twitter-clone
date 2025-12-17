@@ -24,12 +24,12 @@ export interface UpdateProfilePayload {
 
 class ProfileAPI {
   async getProfile(userId: string): Promise<ProfileData> {
-    const response = await authAPI['api'].get<ProfileData>(`/api/profile/${userId}`);
+    const response = await authAPI['api'].get<ProfileData>(`/profile/${userId}`);
     return response.data;
   }
 
   async updateProfile(data: UpdateProfilePayload): Promise<ProfileData> {
-    const response = await authAPI['api'].put<ProfileData>('/api/profile/update', data);
+    const response = await authAPI['api'].put<ProfileData>('/profile/update', data);
     return response.data;
   }
 
@@ -37,7 +37,7 @@ class ProfileAPI {
     const formData = new FormData();
     formData.append('avatar', file);
 
-    const response = await authAPI['api'].post<ProfileData>('/api/profile/upload-avatar', formData, {
+    const response = await authAPI['api'].post<ProfileData>('/profile/upload-avatar', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -49,7 +49,7 @@ class ProfileAPI {
     const formData = new FormData();
     formData.append('cover', file);
 
-    const response = await authAPI['api'].post<ProfileData>('/api/profile/upload-cover', formData, {
+    const response = await authAPI['api'].post<ProfileData>('/profile/upload-cover', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

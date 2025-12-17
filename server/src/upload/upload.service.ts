@@ -53,7 +53,7 @@ export class UploadService {
   }
 
   getFileUrl(filename: string): string {
-    return `/uploads/${filename}`;
+    return `http://localhost:3001/uploads/${filename}`;
   }
 
   deleteFile(filename: string): void {
