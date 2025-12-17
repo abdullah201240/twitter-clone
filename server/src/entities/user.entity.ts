@@ -25,8 +25,26 @@ export class User {
   @Column({ default: true })
   isActive!: boolean;
 
-  @Column({ nullable: true, type: 'varchar', length: 255 })
+  @Column({ nullable: true, type: 'varchar', length: 500 })
   avatar!: string | null;
+
+  @Column({ nullable: true, type: 'varchar', length: 500 })
+  coverImage!: string | null;
+
+  @Column({ nullable: true, type: 'text' })
+  bio!: string | null;
+
+  @Column({ nullable: true, type: 'varchar', length: 100 })
+  location!: string | null;
+
+  @Column({ nullable: true, type: 'varchar', length: 255 })
+  website!: string | null;
+
+  @Column({ default: 0 })
+  followersCount!: number;
+
+  @Column({ default: 0 })
+  followingCount!: number;
 
   @CreateDateColumn()
   createdAt!: Date;

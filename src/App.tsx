@@ -39,6 +39,7 @@ function AppContent() {
           <Route path="messages" element={<MessagesPage />} />
           <Route path="bookmarks" element={<BookmarksPage />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="profile/:userId" element={<ProfilePage />} />
         </Route>
       </Routes>
     </Router>

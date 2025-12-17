@@ -7,6 +7,12 @@ export interface User {
   email: string;
   username: string;
   avatar: string | null;
+  bio: string | null;
+  location: string | null;
+  website: string | null;
+  coverImage: string | null;
+  followersCount: number;
+  followingCount: number;
 }
 
 interface AuthState {

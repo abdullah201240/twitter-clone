@@ -73,10 +73,12 @@ export function Sidebar() {
           <Users className="h-7 w-7" />
           <span className="hidden lg:inline">Communities</span>
         </NavLink>
-        <NavLink to="/profile" className={({ isActive }) => cn("flex items-center lg:gap-4 px-3 py-3 rounded-full text-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors justify-center lg:justify-start", isActive && "font-bold")}>
-          <User className="h-7 w-7" />
-          <span className="hidden lg:inline">Profile</span>
-        </NavLink>
+        {user && (
+          <NavLink to={`/profile`} className={({ isActive }) => cn("flex items-center lg:gap-4 px-3 py-3 rounded-full text-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors justify-center lg:justify-start", isActive && "font-bold")}>
+            <User className="h-7 w-7" />
+            <span className="hidden lg:inline">Profile</span>
+          </NavLink>
+        )}
         <Button variant="ghost" className="w-full justify-center lg:justify-start text-xl rounded-full px-3 py-3 h-auto">
           <MoreHorizontal className="lg:mr-4 h-7 w-7" />
           <span className="hidden lg:inline">More</span>
