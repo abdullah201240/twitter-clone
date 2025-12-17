@@ -4,6 +4,7 @@ import {
   ConflictException,
   UnauthorizedException,
   InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -27,6 +28,7 @@ export interface AuthResponse {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private readonly BCRYPT_ROUNDS = 12;
   private readonly ACCESS_TOKEN_EXPIRATION = '15m';
   private readonly REFRESH_TOKEN_EXPIRATION = '7d';
@@ -40,6 +42,8 @@ export class AuthService {
   async register(registerDto: RegisterDto): Promise<AuthResponse> {
     const { name, email, username, password } = registerDto;
 
+    this.logger.log(`Attempting to register user: ${email}`);
+
     // Check if user already exists
     const existingUser = await this.userRepository.findOne({
       where: [{ email }, { username }],
@@ -47,8 +51,10 @@ export class AuthService {
 
     if (existingUser) {
       if (existingUser.email === email) {
+        this.logger.warn(`Registration failed: Email already registered - ${email}`);
         throw new ConflictException('Email is already registered');
       }
+      this.logger.warn(`Registration failed: Username already taken - ${username}`);
       throw new ConflictException('Username is already taken');
     }
 
@@ -70,7 +76,9 @@ export class AuthService {
 
     try {
       await this.userRepository.save(user);
+      this.logger.log(`Successfully registered user: ${user.id} (${user.email})`);
     } catch (error) {
+      this.logger.error(`Failed to create user: ${error.message}`, error.stack);
       if (error instanceof Error && error.message.includes('Duplicate')) {
         throw new ConflictException('Email or username already exists');
       }
@@ -90,10 +98,13 @@ export class AuthService {
   async login(loginDto: LoginDto): Promise<AuthResponse> {
     const { email, password } = loginDto;
 
+    this.logger.log(`Login attempt for email: ${email}`);
+
     // Find user by email
     const user = await this.userRepository.findOne({ where: { email } });
 
     if (!user) {
+      this.logger.warn(`Login failed: User not found for email ${email}`);
       throw new UnauthorizedException('Invalid email or password');
     }
 
@@ -101,10 +112,12 @@ export class AuthService {
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!isPasswordValid) {
+      this.logger.warn(`Login failed: Invalid password for user ${email}`);
       throw new UnauthorizedException('Invalid email or password');
     }
 
     if (!user.isActive) {
+      this.logger.warn(`Login failed: Account deactivated for user ${email}`);
       throw new UnauthorizedException('Account is deactivated');
     }
 
@@ -114,6 +127,8 @@ export class AuthService {
     // Save refresh token to database
     user.refreshToken = refreshToken;
     await this.userRepository.save(user);
+
+    this.logger.log(`Successful login for user: ${user.id} (${user.email})`);
 
     return this.buildAuthResponse(user, accessToken, refreshToken);
   }
@@ -156,11 +171,15 @@ export class AuthService {
   }
 
   async logout(userId: string): Promise<void> {
+    this.logger.log(`Logout attempt for user: ${userId}`);
     const user = await this.userRepository.findOne({ where: { id: userId } });
 
     if (user) {
       user.refreshToken = null;
       await this.userRepository.save(user);
+      this.logger.log(`Successfully logged out user: ${userId}`);
+    } else {
+      this.logger.warn(`Logout failed: User not found for ID ${userId}`);
     }
   }
 

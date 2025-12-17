@@ -58,15 +58,18 @@ export function ProfilePage() {
                 setProfile(data)
             }
             // If viewing own profile but not logged in
-            else {
-                // Redirect to login
-                navigate('/login')
+            else if (!currentUser) {
+                // Redirect to login only if trying to view own profile without being logged in
+                if (!userId) {
+                    navigate('/login')
+                }
                 return
             }
         } catch (error) {
             console.error('Error loading profile:', error)
-            // If there's an error and we're trying to view our own profile, redirect to login
-            if (isOwnProfile) {
+            // Only redirect to login if we're trying to view our own profile and there's a serious auth issue
+            // For now, we'll just show an error message instead of redirecting
+            if (isOwnProfile && !currentUser) {
                 navigate('/login')
             }
         } finally {
@@ -121,7 +124,13 @@ export function ProfilePage() {
         return <div className="p-4 text-center">Loading profile...</div>
     }
 
-    if (!profile) {
+    // If we're trying to view our own profile but aren't logged in
+    if (!profile && isOwnProfile && !currentUser) {
+        return <div className="p-4 text-center">Please log in to view your profile.</div>
+    }
+
+    // If we're trying to view another user's profile but it wasn't found
+    if (!profile && !isOwnProfile) {
         return <div className="p-4 text-center">Profile not found.</div>
     }
 

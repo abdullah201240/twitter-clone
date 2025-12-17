@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
@@ -7,6 +7,7 @@ import { AppService } from './app.service';
 import { User } from './entities/user.entity';
 import { AuthModule } from './auth/auth.module';
 import { ProfileModule } from './profile/profile.module';
+import { LoggerMiddleware } from './logger.middleware';
 
 @Module({
   imports: [
@@ -26,7 +27,7 @@ import { ProfileModule } from './profile/profile.module';
       migrationsTableName: 'migrations',
       migrationsRun: true, // Auto-run migrations on app start
       synchronize: false, // Disabled for production safety - use migrations instead
-      logging: false,
+      logging: true,
     }),
     TypeOrmModule.forFeature([User]),
     AuthModule,
@@ -35,4 +36,10 @@ import { ProfileModule } from './profile/profile.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(LoggerMiddleware)
+      .forRoutes('*');
+  }
+}
