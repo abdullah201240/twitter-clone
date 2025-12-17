@@ -28,11 +28,11 @@ export function HomePage() {
 
     return (
         <>
-            <div className="sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-md z-10 border-b dark:border-gray-800">
+            <div className="sticky top-0 md:top-0 bg-white/80 dark:bg-black/80 backdrop-blur-md z-10 border-b dark:border-gray-800">
                 <div className="flex">
                     <div
                         onClick={() => setActiveTab('for-you')}
-                        className="flex-1 p-4 hover:bg-gray-200/50 dark:hover:bg-gray-800/50 cursor-pointer transition flex justify-center relative"
+                        className="flex-1 p-4 md:p-4 hover:bg-gray-200/50 dark:hover:bg-gray-800/50 cursor-pointer transition flex justify-center relative min-h-[53px]"
                     >
                         <div className={`relative h-full flex items-center ${activeTab === 'for-you' ? 'font-bold' : 'text-gray-500 font-medium'}`}>
                             For you
@@ -43,7 +43,7 @@ export function HomePage() {
                     </div>
                     <div
                         onClick={() => setActiveTab('following')}
-                        className="flex-1 p-4 hover:bg-gray-200/50 dark:hover:bg-gray-800/50 cursor-pointer transition flex justify-center relative"
+                        className="flex-1 p-4 md:p-4 hover:bg-gray-200/50 dark:hover:bg-gray-800/50 cursor-pointer transition flex justify-center relative min-h-[53px]"
                     >
                         <div className={`relative h-full flex items-center ${activeTab === 'following' ? 'font-bold' : 'text-gray-500 font-medium'}`}>
                             Following

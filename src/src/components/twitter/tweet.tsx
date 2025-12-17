@@ -99,27 +99,27 @@ export function Tweet({
 
   return (
     <>
-      <div className="border-b p-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors cursor-pointer">
-        <div className="flex">
-          <div className="mr-4 flex-shrink-0">
-            <Avatar>
+      <div className="border-b p-3 md:p-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors cursor-pointer">
+        <div className="flex gap-2 md:gap-4">
+          <div className="flex-shrink-0">
+            <Avatar className="h-10 w-10 md:h-12 md:w-12">
               <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
               <AvatarFallback>CN</AvatarFallback>
             </Avatar>
           </div>
-          <div className="flex-1">
-            <div className="flex items-center">
-              <span className="font-bold">{username}</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center flex-wrap gap-1">
+              <span className="font-bold text-sm md:text-base">{username}</span>
               {isVerified && (
-                <Badge className="ml-1 px-1 py-0 bg-blue-500 text-white rounded-full">
+                <Badge className="px-1 py-0 bg-blue-500 text-white rounded-full text-xs">
                   ✓
                 </Badge>
               )}
-              <span className="text-gray-500 ml-2">{handle}</span>
-              <span className="text-gray-500 mx-1">·</span>
-              <span className="text-gray-500">{timestamp}</span>
+              <span className="text-gray-500 text-sm md:text-base">{handle}</span>
+              <span className="text-gray-500">·</span>
+              <span className="text-gray-500 text-sm md:text-base">{timestamp}</span>
             </div>
-            <div className="mt-1 mb-3">
+            <div className="mt-1 mb-3 text-sm md:text-base break-words">
               {content}
             </div>
             {image && (
@@ -127,40 +127,40 @@ export function Tweet({
                 <img src={image} alt="Tweet attachment" className="w-full h-auto object-cover max-h-[500px]" />
               </div>
             )}
-            <div className="flex justify-between max-w-md">
+            <div className="flex justify-between max-w-md -ml-2">
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-gray-500 hover:text-blue-500"
+                className="text-gray-500 hover:text-blue-500 h-9 px-2 md:px-3"
                 onClick={handleComment}
               >
-                <MessageCircle className="mr-1 h-4 w-4" />
-                <span>{formatNumber(commentCount)}</span>
+                <MessageCircle className="mr-1 h-4 w-4 md:h-5 md:w-5" />
+                <span className="text-xs md:text-sm">{formatNumber(commentCount)}</span>
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
-                className={`${isRetweeted ? 'text-green-500' : 'text-gray-500'} hover:text-green-500`}
+                className={`${isRetweeted ? 'text-green-500' : 'text-gray-500'} hover:text-green-500 h-9 px-2 md:px-3`}
                 onClick={handleRetweet}
               >
-                <Repeat2 className="mr-1 h-4 w-4" />
-                <span>{formatNumber(retweetCount)}</span>
+                <Repeat2 className="mr-1 h-4 w-4 md:h-5 md:w-5" />
+                <span className="text-xs md:text-sm">{formatNumber(retweetCount)}</span>
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
-                className={`${isLiked ? 'text-pink-600' : 'text-gray-500'} hover:text-pink-600`}
+                className={`${isLiked ? 'text-pink-600' : 'text-gray-500'} hover:text-pink-600 h-9 px-2 md:px-3`}
                 onClick={handleLike}
               >
-                <Heart className={`mr-1 h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
-                <span>{formatNumber(likeCount)}</span>
+                <Heart className={`mr-1 h-4 w-4 md:h-5 md:w-5 ${isLiked ? 'fill-current' : ''}`} />
+                <span className="text-xs md:text-sm">{formatNumber(likeCount)}</span>
               </Button>
-              <Button variant="ghost" size="sm" className="text-gray-500 hover:text-blue-500">
-                <BarChart2 className="mr-1 h-4 w-4" />
-                <span>{formatNumber(views)}</span>
+              <Button variant="ghost" size="sm" className="text-gray-500 hover:text-blue-500 h-9 px-2 md:px-3">
+                <BarChart2 className="mr-1 h-4 w-4 md:h-5 md:w-5" />
+                <span className="text-xs md:text-sm">{formatNumber(views)}</span>
               </Button>
-              <Button variant="ghost" size="sm" className="text-gray-500 hover:text-blue-500">
-                <Share className="h-4 w-4" />
+              <Button variant="ghost" size="sm" className="text-gray-500 hover:text-blue-500 h-9 px-2">
+                <Share className="h-4 w-4 md:h-5 md:w-5" />
               </Button>
             </div>
           </div>

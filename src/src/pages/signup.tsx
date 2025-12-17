@@ -1,7 +1,8 @@
 import { useState } from "react"
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
-import { useAuth } from "../context/auth-context"
+import { useAppDispatch } from "../store/hooks"
+import { signup as signupAction } from "../store/slices/authSlice"
 import { useNavigate, Link } from "react-router-dom"
 import { Label } from "../components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
@@ -13,13 +14,13 @@ export function SignupPage() {
     const [day, setDay] = useState("")
     const [year, setYear] = useState("")
 
-    const { signup } = useAuth()
+    const dispatch = useAppDispatch()
     const navigate = useNavigate()
 
     const handleSignup = (e: React.FormEvent) => {
         e.preventDefault()
         if (name && username) {
-            signup(name, username)
+            dispatch(signupAction({ name, username }))
             navigate("/")
         }
     }

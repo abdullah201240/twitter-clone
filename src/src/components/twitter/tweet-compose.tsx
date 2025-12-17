@@ -2,7 +2,7 @@ import { useState, useRef } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import { Button } from "../ui/button"
 import { Textarea } from "../ui/textarea"
-import { useAuth } from "../../context/auth-context"
+import { useAppSelector } from "../../store/hooks"
 import {
   Image as ImageIcon,
   Smile,
@@ -27,7 +27,7 @@ export function TweetCompose({ onPost }: TweetComposeProps) {
   const [content, setContent] = useState("")
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const { user } = useAuth()
+  const user = useAppSelector((state) => state.auth.user)
 
   const handlePost = () => {
     if ((content.trim() || imagePreview) && onPost) {

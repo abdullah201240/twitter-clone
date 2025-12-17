@@ -1,18 +1,19 @@
 import { useState } from "react"
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
-import { useAuth } from "../context/auth-context"
+import { useAppDispatch } from "../store/hooks"
+import { login as loginAction } from "../store/slices/authSlice"
 import { useNavigate, Link } from "react-router-dom"
 
 export function LoginPage() {
     const [username, setUsername] = useState("")
-    const { login } = useAuth()
+    const dispatch = useAppDispatch()
     const navigate = useNavigate()
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault()
         if (username.trim()) {
-            login(username)
+            dispatch(loginAction(username))
             navigate("/")
         }
     }

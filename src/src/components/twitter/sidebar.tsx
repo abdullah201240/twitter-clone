@@ -15,7 +15,8 @@ import {
   MoreHorizontal
 } from "lucide-react"
 
-import { useAuth } from "../../context/auth-context"
+import { useAppSelector, useAppDispatch } from "../../store/hooks"
+import { logout as logoutAction } from "../../store/slices/authSlice"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,75 +26,87 @@ import {
 import { LogOut } from "lucide-react"
 
 export function Sidebar() {
-  const { user, logout } = useAuth()
+  const user = useAppSelector((state) => state.auth.user)
+  const dispatch = useAppDispatch()
+
+  const handleLogout = () => {
+    dispatch(logoutAction())
+  }
 
   if (!user) return null
 
   return (
-    <div className="sticky top-0 h-screen w-64 p-4 flex flex-col border-r dark:border-gray-800">
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold">Twitter</h1>
+    <div className="hidden md:flex sticky top-0 h-screen md:w-20 lg:w-64 p-2 lg:p-4 flex-col border-r dark:border-gray-800">
+      {/* Logo */}
+      <div className="mb-4 flex items-center justify-center lg:justify-start">
+        <div className="p-3 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-full transition-colors">
+          <svg viewBox="0 0 24 24" aria-hidden="true" className="h-7 w-7 fill-black dark:fill-white">
+            <g><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></g>
+          </svg>
+        </div>
       </div>
 
-      <nav className="flex-1 space-y-2">
-        <NavLink to="/" className={({ isActive }) => cn("flex items-center gap-4 px-4 py-3 rounded-full text-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors", isActive && "font-bold")}>
+      <nav className="flex-1 space-y-1">
+        <NavLink to="/" className={({ isActive }) => cn("flex items-center lg:gap-4 px-3 py-3 rounded-full text-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors justify-center lg:justify-start", isActive && "font-bold")}>
           <Home className="h-7 w-7" />
-          Home
+          <span className="hidden lg:inline">Home</span>
         </NavLink>
-        <NavLink to="/explore" className={({ isActive }) => cn("flex items-center gap-4 px-4 py-3 rounded-full text-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors", isActive && "font-bold")}>
+        <NavLink to="/explore" className={({ isActive }) => cn("flex items-center lg:gap-4 px-3 py-3 rounded-full text-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors justify-center lg:justify-start", isActive && "font-bold")}>
           <Search className="h-7 w-7" />
-          Explore
+          <span className="hidden lg:inline">Explore</span>
         </NavLink>
-        <NavLink to="/notifications" className={({ isActive }) => cn("flex items-center gap-4 px-4 py-3 rounded-full text-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors", isActive && "font-bold")}>
+        <NavLink to="/notifications" className={({ isActive }) => cn("flex items-center lg:gap-4 px-3 py-3 rounded-full text-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors justify-center lg:justify-start", isActive && "font-bold")}>
           <Bell className="h-7 w-7" />
-          Notifications
+          <span className="hidden lg:inline">Notifications</span>
         </NavLink>
-        <NavLink to="/messages" className={({ isActive }) => cn("flex items-center gap-4 px-4 py-3 rounded-full text-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors", isActive && "font-bold")}>
+        <NavLink to="/messages" className={({ isActive }) => cn("flex items-center lg:gap-4 px-3 py-3 rounded-full text-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors justify-center lg:justify-start", isActive && "font-bold")}>
           <Mail className="h-7 w-7" />
-          Messages
+          <span className="hidden lg:inline">Messages</span>
         </NavLink>
-        <NavLink to="/bookmarks" className={({ isActive }) => cn("flex items-center gap-4 px-4 py-3 rounded-full text-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors", isActive && "font-bold")}>
+        <NavLink to="/bookmarks" className={({ isActive }) => cn("flex items-center lg:gap-4 px-3 py-3 rounded-full text-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors justify-center lg:justify-start", isActive && "font-bold")}>
           <Bookmark className="h-7 w-7" />
-          Bookmarks
+          <span className="hidden lg:inline">Bookmarks</span>
         </NavLink>
-        <NavLink to="/communities" className={({ isActive }) => cn("flex items-center gap-4 px-4 py-3 rounded-full text-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors", isActive && "font-bold")}>
+        <NavLink to="/communities" className={({ isActive }) => cn("flex items-center lg:gap-4 px-3 py-3 rounded-full text-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors justify-center lg:justify-start", isActive && "font-bold")}>
           <Users className="h-7 w-7" />
-          Communities
+          <span className="hidden lg:inline">Communities</span>
         </NavLink>
-        <NavLink to="/profile" className={({ isActive }) => cn("flex items-center gap-4 px-4 py-3 rounded-full text-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors", isActive && "font-bold")}>
+        <NavLink to="/profile" className={({ isActive }) => cn("flex items-center lg:gap-4 px-3 py-3 rounded-full text-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors justify-center lg:justify-start", isActive && "font-bold")}>
           <User className="h-7 w-7" />
-          Profile
+          <span className="hidden lg:inline">Profile</span>
         </NavLink>
-        <Button variant="ghost" className="w-full justify-start text-xl rounded-full px-4 py-3 h-auto">
-          <MoreHorizontal className="mr-4 h-7 w-7" />
-          More
+        <Button variant="ghost" className="w-full justify-center lg:justify-start text-xl rounded-full px-3 py-3 h-auto">
+          <MoreHorizontal className="lg:mr-4 h-7 w-7" />
+          <span className="hidden lg:inline">More</span>
         </Button>
       </nav>
 
-      <Button className="w-full py-6 text-lg mb-4">
-        <Feather className="mr-2 h-6 w-6" />
-        Post
+      {/* Post Button - Icon on tablet, full on desktop */}
+      <Button className="w-full py-3 lg:py-6 text-lg mb-4 justify-center">
+        <Feather className="h-6 w-6 lg:mr-2" />
+        <span className="hidden lg:inline">Post</span>
       </Button>
 
+      {/* User Profile */}
       <div className="mt-auto">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <div className="flex items-center p-3 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 cursor-pointer select-none">
-              <Avatar>
+            <div className="flex items-center p-3 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 cursor-pointer select-none justify-center lg:justify-start">
+              <Avatar className="h-10 w-10">
                 <AvatarImage src={user.avatar} alt={user.handle} />
                 <AvatarFallback>{user.username[0]}</AvatarFallback>
               </Avatar>
-              <div className="ml-3 hidden xl:block">
+              <div className="ml-3 hidden lg:block">
                 <p className="font-semibold text-sm">{user.name}</p>
                 <p className="text-gray-500 text-sm">{user.handle}</p>
               </div>
-              <Ellipsis className="ml-auto h-5 w-5 hidden xl:block" />
+              <Ellipsis className="ml-auto h-5 w-5 hidden lg:block" />
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
-            <DropdownMenuItem onClick={logout} className="cursor-pointer text-red-500 font-bold">
+            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-500 font-bold">
               <LogOut className="mr-2 h-4 w-4" />
-              Log out {user.handle}
+              Log out {user?.handle}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
