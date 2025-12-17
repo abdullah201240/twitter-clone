@@ -77,7 +77,7 @@ export class ProfileService {
     }
 
     // Set new avatar
-    user.avatar = this.uploadService.getFileUrl(file.filename);
+    user.avatar = this.uploadService.getPublicUrl(file.filename);
     await this.userRepository.save(user);
 
     this.logger.log(`Successfully uploaded avatar for user: ${userId}`);
@@ -109,7 +109,7 @@ export class ProfileService {
     }
 
     // Set new cover image
-    user.coverImage = this.uploadService.getFileUrl(file.filename);
+    user.coverImage = this.uploadService.getPublicUrl(file.filename);
     await this.userRepository.save(user);
 
     this.logger.log(`Successfully uploaded cover image for user: ${userId}`);
@@ -125,7 +125,7 @@ export class ProfileService {
     if (avatarUrl && !avatarUrl.startsWith('http')) {
       const filename = this.uploadService.extractFilenameFromUrl(avatarUrl);
       if (filename) {
-        avatarUrl = this.uploadService.getFileUrl(filename);
+        avatarUrl = this.uploadService.getPublicUrl(filename);
       }
     }
     
@@ -133,7 +133,7 @@ export class ProfileService {
     if (coverImageUrl && !coverImageUrl.startsWith('http')) {
       const filename = this.uploadService.extractFilenameFromUrl(coverImageUrl);
       if (filename) {
-        coverImageUrl = this.uploadService.getFileUrl(filename);
+        coverImageUrl = this.uploadService.getPublicUrl(filename);
       }
     }
     

@@ -134,6 +134,12 @@ export function ProfilePage() {
         return <div className="p-4 text-center">Profile not found.</div>
     }
 
+    // This case should theoretically never happen due to the above checks,
+    // but we add this for TypeScript to understand profile is not null
+    if (!profile) {
+        return <div className="p-4 text-center">Profile not available.</div>
+    }
+
     const joinedDate = new Date(profile.createdAt).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
@@ -157,7 +163,7 @@ export function ProfilePage() {
                     <img 
                         src={profile.coverImage} 
                         alt="Cover" 
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain"
                         onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             target.style.display = 'none';
@@ -189,7 +195,7 @@ export function ProfilePage() {
                                 <img 
                                     src={profile.avatar} 
                                     alt="Profile" 
-                                    className="w-full h-full rounded-full object-cover"
+                                    className="w-full h-full rounded-full object-contain"
                                     onError={(e) => {
                                         const target = e.target as HTMLImageElement;
                                         target.style.display = 'none';

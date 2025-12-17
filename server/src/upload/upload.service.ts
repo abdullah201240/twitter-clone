@@ -53,7 +53,35 @@ export class UploadService {
   }
 
   getFileUrl(filename: string): string {
-    return `http://localhost:3001/uploads/${filename}`;
+    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+    const host = process.env.API_HOST || 'localhost:3001';
+    return `${protocol}://${host}/uploads/${filename}`;
+  }
+
+  getFullUrlFromPath(filePath: string): string {
+    // If it's already a full URL, return as is
+    if (filePath.startsWith('http')) {
+      return filePath;
+    }
+    
+    // If it's a relative path, construct the full URL
+    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+    const host = process.env.API_HOST || 'localhost:3001';
+    
+    // Remove leading slash if present to avoid double slashes
+    const cleanPath = filePath.startsWith('/') ? filePath.substring(1) : filePath;
+    return `${protocol}://${host}/${cleanPath}`;
+  }
+
+  /**
+   * Generate a full URL for an uploaded file
+   * @param filename The name of the file
+   * @returns Full URL to access the file
+   */
+  getPublicUrl(filename: string): string {
+    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+    const host = process.env.API_HOST || 'localhost:3001';
+    return `${protocol}://${host}/uploads/${filename}`;
   }
 
   deleteFile(filename: string): void {

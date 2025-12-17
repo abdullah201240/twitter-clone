@@ -82,7 +82,7 @@ export function TweetCompose({ onPost }: TweetComposeProps) {
 
           {imagePreview && (
             <div className="relative mt-2 mb-4">
-              <img src={imagePreview} alt="Preview" className="rounded-2xl max-h-[300px] object-cover border" />
+              <img src={imagePreview} alt="Preview" className="rounded-2xl max-h-[300px] object-contain border" />
               <Button
                 variant="secondary"
                 size="icon"

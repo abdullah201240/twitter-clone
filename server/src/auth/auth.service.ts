@@ -24,6 +24,12 @@ export interface AuthResponse {
     email: string;
     username: string;
     avatar: string | null;
+    bio: string | null;
+    location: string | null;
+    website: string | null;
+    coverImage: string | null;
+    followersCount: number;
+    followingCount: number;
   };
 }
 
@@ -220,7 +226,16 @@ export class AuthService {
     if (avatarUrl && !avatarUrl.startsWith('http')) {
       const filename = this.uploadService.extractFilenameFromUrl(avatarUrl);
       if (filename) {
-        avatarUrl = this.uploadService.getFileUrl(filename);
+        avatarUrl = this.uploadService.getPublicUrl(filename);
+      }
+    }
+    
+    // Convert relative cover image path to full URL if needed
+    let coverImageUrl = user.coverImage;
+    if (coverImageUrl && !coverImageUrl.startsWith('http')) {
+      const filename = this.uploadService.extractFilenameFromUrl(coverImageUrl);
+      if (filename) {
+        coverImageUrl = this.uploadService.getPublicUrl(filename);
       }
     }
     
@@ -233,6 +248,12 @@ export class AuthService {
         email: user.email,
         username: user.username,
         avatar: avatarUrl,
+        bio: user.bio,
+        location: user.location,
+        website: user.website,
+        coverImage: coverImageUrl,
+        followersCount: user.followersCount,
+        followingCount: user.followingCount,
       },
     };
   }

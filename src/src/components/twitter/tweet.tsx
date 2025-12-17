@@ -124,7 +124,7 @@ export function Tweet({
             </div>
             {image && (
               <div className="mt-2 mb-3 rounded-2xl overflow-hidden border">
-                <img src={image} alt="Tweet attachment" className="w-full h-auto object-cover max-h-[500px]" />
+                <img src={image} alt="Tweet attachment" className="w-full h-auto object-contain max-h-[500px]" />
               </div>
             )}
             <div className="flex justify-between max-w-md -ml-2">

@@ -21,6 +21,12 @@ export interface AuthResponse {
     email: string;
     username: string;
     avatar: string | null;
+    bio: string | null;
+    location: string | null;
+    website: string | null;
+    coverImage: string | null;
+    followersCount: number;
+    followingCount: number;
   };
 }
 
@@ -39,7 +45,7 @@ class AuthAPI {
   private isRefreshing = false;
   private failedQueue: Array<{ resolve: (value: string) => void; reject: (reason?: any) => void }> = [];
 
-  constructor(baseURL: string = '/api') {
+  constructor(baseURL: string = '') {
     this.api = axios.create({
       baseURL,
       headers: {
@@ -87,7 +93,7 @@ class AuthAPI {
               throw new Error('No refresh token available');
             }
 
-            const response = await this.api.post<RefreshTokenResponse>('/api/auth/refresh', {
+            const response = await this.api.post<RefreshTokenResponse>('http://localhost:3001/api/auth/refresh', {
               refreshToken: this.refreshToken,
             });
 
@@ -122,14 +128,14 @@ class AuthAPI {
   }
 
   async register(data: RegisterRequest): Promise<AuthResponse> {
-    const response = await this.api.post<AuthResponse>('/api/auth/register', data);
+    const response = await this.api.post<AuthResponse>('http://localhost:3001/api/auth/register', data);
     this.setTokens(response.data.accessToken, response.data.refreshToken);
     this.saveTokensToStorage();
     return response.data;
   }
 
   async login(data: LoginRequest): Promise<AuthResponse> {
-    const response = await this.api.post<AuthResponse>('/api/auth/login', data);
+    const response = await this.api.post<AuthResponse>('http://localhost:3001/api/auth/login', data);
     this.setTokens(response.data.accessToken, response.data.refreshToken);
     this.saveTokensToStorage();
     return response.data;
@@ -137,7 +143,7 @@ class AuthAPI {
 
   async logout(): Promise<void> {
     try {
-      await this.api.post('/api/auth/logout');
+      await this.api.post('http://localhost:3001/api/auth/logout');
     } finally {
       this.clearTokens();
     }
@@ -148,7 +154,7 @@ class AuthAPI {
       throw new Error('No refresh token available');
     }
 
-    const response = await this.api.post<RefreshTokenResponse>('/api/auth/refresh', {
+    const response = await this.api.post<RefreshTokenResponse>('http://localhost:3001/api/auth/refresh', {
       refreshToken: this.refreshToken,
     });
 
@@ -202,6 +208,10 @@ class AuthAPI {
 
   isAuthenticated(): boolean {
     return !!this.accessToken && !!this.refreshToken;
+  }
+
+  getApi() {
+    return this.api;
   }
 }
 

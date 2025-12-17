@@ -8,12 +8,26 @@ import { User } from './entities/user.entity';
 import { AuthModule } from './auth/auth.module';
 import { ProfileModule } from './profile/profile.module';
 import { LoggerMiddleware } from './logger.middleware';
+import { UploadCorsMiddleware } from './upload/upload.middleware';
 
 @Module({
   imports: [
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'uploads'),
       serveRoot: '/uploads',
+      serveStaticOptions: {
+        setHeaders: (res, path) => {
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+          res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+          res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+          res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+          res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+          if (path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.png') || path.endsWith('.webp')) {
+            res.setHeader('Cache-Control', 'public, max-age=31536000');
+          }
+        },
+      },
     }),
     TypeOrmModule.forRoot({
       type: 'mysql',
@@ -41,5 +55,9 @@ export class AppModule implements NestModule {
     consumer
       .apply(LoggerMiddleware)
       .forRoutes('*');
+    
+    consumer
+      .apply(UploadCorsMiddleware)
+      .forRoutes('/uploads/*');
   }
 }

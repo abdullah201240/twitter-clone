@@ -7,8 +7,20 @@ import * as cors from 'cors';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.use(helmet());
-  app.use(cors());
+  app.use(helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    crossOriginEmbedderPolicy: { policy: 'require-corp' },
+    crossOriginOpenerPolicy: { policy: 'same-origin' },
+  }));
+  app.use(cors({
+    origin: true, // Allow all origins
+    credentials: true,
+    exposedHeaders: ['Content-Disposition'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+  }));
 
   // Enable global validation pipe
   app.useGlobalPipes(
