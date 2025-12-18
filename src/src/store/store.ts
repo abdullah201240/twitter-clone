@@ -2,6 +2,7 @@ import { configureStore, combineReducers } from '@reduxjs/toolkit'
 import { persistStore, persistReducer } from 'redux-persist'
 import storage from 'redux-persist/lib/storage'
 import authReducer from './slices/authSlice'
+import type { PersistPartial } from 'redux-persist/lib/persistReducer'
 
 const persistConfig = {
     key: 'root',
@@ -27,5 +28,9 @@ export const store = configureStore({
 
 export const persistor = persistStore(store)
 
-export type RootState = ReturnType<typeof store.getState>
+type RootStateBase = {
+  auth: ReturnType<typeof authReducer>
+}
+
+export type RootState = RootStateBase & PersistPartial
 export type AppDispatch = typeof store.dispatch

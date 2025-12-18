@@ -19,6 +19,7 @@ export function TwitterFeed({ type, newPost }: TwitterFeedProps) {
     const [likeStatuses, setLikeStatuses] = useState<Record<string, boolean>>({})
     const observerTarget = useRef(null)
     const seenIds = useRef(new Set<string>())
+    const fetchedLikeStatuses = useRef(new Set<string>())
     const user = useAppSelector((state) => state.auth.user)
 
     // Handle new post
@@ -34,9 +35,9 @@ export function TwitterFeed({ type, newPost }: TwitterFeedProps) {
         const fetchLikeStatuses = async () => {
             if (!user || tweets.length === 0) return;
             
-            // Get IDs of tweets that don't have like status cached yet
+            // Get IDs of tweets that haven't had like status fetched yet
             const tweetIds = tweets
-                .filter(tweet => !(tweet.id in likeStatuses))
+                .filter(tweet => !fetchedLikeStatuses.current.has(tweet.id))
                 .map(tweet => tweet.id);
                 
             if (tweetIds.length === 0) return;
@@ -44,13 +45,15 @@ export function TwitterFeed({ type, newPost }: TwitterFeedProps) {
             try {
                 const statuses = await murmurAPI.getMultipleLikeStatus(tweetIds);
                 setLikeStatuses(prev => ({ ...prev, ...statuses }));
+                // Mark these IDs as fetched
+                tweetIds.forEach(id => fetchedLikeStatuses.current.add(id));
             } catch (error) {
                 console.error('Error fetching like statuses:', error);
             }
         };
         
         fetchLikeStatuses();
-    }, [tweets, user]);
+    }, [user, tweets]);
 
     const loadMoreTweets = useCallback(async () => {
         if (isLoading || !hasMore) return
@@ -86,6 +89,9 @@ export function TwitterFeed({ type, newPost }: TwitterFeedProps) {
         if (tweets.length === 0 && hasMore) {
             loadMoreTweets()
         }
+        // Clear fetched like statuses when type changes
+        fetchedLikeStatuses.current.clear();
+        setLikeStatuses({});
     }, [type]) // Reset when type changes
 
     // Infinite scroll observer

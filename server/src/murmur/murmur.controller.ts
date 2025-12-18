@@ -97,27 +97,8 @@ export class MurmurController {
   }
 
   // Like endpoints
-  @Post('/murmurs/:murmurId/like')
-  @UseGuards(JwtAuthGuard)
-  async toggleLike(
-    @Req() request: Request,
-    @Param('murmurId') murmurId: string,
-  ) {
-    const user = request.user as any;
-    return await this.likeService.toggleLike(user.userId, murmurId);
-  }
-
-  @Get('/murmurs/:murmurId/like-status')
-  @UseGuards(JwtAuthGuard)
-  async getLikeStatus(
-    @Req() request: Request,
-    @Param('murmurId') murmurId: string,
-  ) {
-    const user = request.user as any;
-    const isLiked = await this.likeService.isLiked(user.userId, murmurId);
-    return { isLiked };
-  }
-
+  // NOTE: getMultipleLikeStatus must come BEFORE getLikeStatus to prevent route matching issues
+  // /murmurs/like-status (no params) must be matched before /murmurs/:murmurId/like-status (with param)
   @Get('/murmurs/like-status')
   @UseGuards(JwtAuthGuard)
   async getMultipleLikeStatus(
@@ -137,6 +118,27 @@ export class MurmurController {
     }
     
     return await this.likeService.getMultipleLikeStatus(user.userId, murmurIds);
+  }
+
+  @Get('/murmurs/:murmurId/like-status')
+  @UseGuards(JwtAuthGuard)
+  async getLikeStatus(
+    @Req() request: Request,
+    @Param('murmurId') murmurId: string,
+  ) {
+    const user = request.user as any;
+    const isLiked = await this.likeService.isLiked(user.userId, murmurId);
+    return { isLiked };
+  }
+
+  @Post('/murmurs/:murmurId/like')
+  @UseGuards(JwtAuthGuard)
+  async toggleLike(
+    @Req() request: Request,
+    @Param('murmurId') murmurId: string,
+  ) {
+    const user = request.user as any;
+    return await this.likeService.toggleLike(user.userId, murmurId);
   }
 
   // Comment endpoints

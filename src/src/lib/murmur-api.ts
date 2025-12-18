@@ -164,7 +164,7 @@ class MurmurAPI {
     return response.data;
   }
 
-  async getComments(murmurId: string, limit: number = 20, offset: number = 0): Promise<CommentData[]> {
+  async getComments(murmurId: string, limit: number = 10, offset: number = 0): Promise<CommentData[]> {
     const params = new URLSearchParams();
     params.append('limit', limit.toString());
     params.append('offset', offset.toString());

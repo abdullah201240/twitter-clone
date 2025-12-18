@@ -178,7 +178,7 @@ export function ProfilePage() {
         loadProfile()
     }, [loadProfile])
 
-    // Optimized like status fetching
+    // Optimized like status fetching - Removed likeStatuses from dependency to prevent infinite loop
     useEffect(() => {
         const fetchLikeStatuses = async () => {
             if (!currentUser || userMurmurs.length === 0) return;
@@ -198,7 +198,7 @@ export function ProfilePage() {
         };
         
         fetchLikeStatuses();
-    }, [userMurmurs, currentUser, likeStatuses]);
+    }, [userMurmurs, currentUser]);
 
     const handleAvatarUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]

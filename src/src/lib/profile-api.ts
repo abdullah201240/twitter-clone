@@ -105,7 +105,7 @@ class ProfileAPI {
     });
   }
 
-  async getFollowers(userId: string, limit: number = 20, offset: number = 0): Promise<UserWithFollowStatus[]> {
+  async getFollowers(userId: string, limit: number = 10, offset: number = 0): Promise<UserWithFollowStatus[]> {
     const key = `followers_${userId}_${limit}_${offset}`;
     return this.dedupeRequest(key, async () => {
       const params = new URLSearchParams();
@@ -116,7 +116,7 @@ class ProfileAPI {
     });
   }
 
-  async getFollowing(userId: string, limit: number = 20, offset: number = 0): Promise<UserWithFollowStatus[]> {
+  async getFollowing(userId: string, limit: number = 10, offset: number = 0): Promise<UserWithFollowStatus[]> {
     const key = `following_${userId}_${limit}_${offset}`;
     return this.dedupeRequest(key, async () => {
       const params = new URLSearchParams();

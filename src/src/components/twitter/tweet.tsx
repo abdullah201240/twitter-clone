@@ -95,25 +95,29 @@ export function Tweet({
   // Load like status on mount only if external isLiked is not provided
   useEffect(() => {
     if (externalIsLiked !== undefined || !id || !user) return
+    
+    const loadLikeStatus = async () => {
+      try {
+        const status = await murmurAPI.getLikeStatus(id)
+        setLocalIsLiked(status.isLiked)
+      } catch (error) {
+        console.error('Error loading like status:', error)
+      }
+    }
+    
     loadLikeStatus()
   }, [id, user, externalIsLiked])
 
-  // Load comments when dialog opens
-  useEffect(() => {
-    if (isCommentDialogOpen && id) {
-      loadComments()
-    }
-  }, [isCommentDialogOpen, id])
-
-  const loadLikeStatus = useCallback(async () => {
-    if (!id || !user) return
-    try {
-      const status = await murmurAPI.getLikeStatus(id)
-      setLocalIsLiked(status.isLiked)
-    } catch (error) {
-      console.error('Error loading like status:', error)
-    }
-  }, [id, user])
+  const formatTime = useCallback((dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+    
+    if (diffInSeconds < 60) return `${diffInSeconds}s`
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m`
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h`
+    return `${Math.floor(diffInSeconds / 86400)}d`
+  }, [])
 
   const loadComments = useCallback(async () => {
     if (!id) return
@@ -133,7 +137,14 @@ export function Tweet({
     } catch (error) {
       console.error('Error loading comments:', error)
     }
-  }, [id])
+  }, [id, formatTime])
+
+  // Load comments when dialog opens
+  useEffect(() => {
+    if (isCommentDialogOpen && id) {
+      loadComments()
+    }
+  }, [isCommentDialogOpen, id])
 
   const handleLike = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -186,17 +197,6 @@ export function Tweet({
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
     if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
     return num
-  }, [])
-
-  const formatTime = useCallback((dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-    
-    if (diffInSeconds < 60) return `${diffInSeconds}s`
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m`
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h`
-    return `${Math.floor(diffInSeconds / 86400)}d`
   }, [])
 
   const handleDelete = useCallback(async () => {
