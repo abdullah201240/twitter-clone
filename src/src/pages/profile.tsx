@@ -418,6 +418,7 @@ export function ProfilePage() {
                                     views={0}
                                     isVerified={false}
                                     murmur={murmur}
+                                    onDelete={() => setUserMurmurs(prev => prev.filter(m => m.id !== murmur.id))}
                                 />
                             ))}
                         </div>

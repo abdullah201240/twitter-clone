@@ -4,12 +4,20 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import { Button } from "../ui/button"
 import {
   MessageCircle,
-  Heart
+  Heart,
+  MoreHorizontal
 } from "lucide-react"
 import { Badge } from "../ui/badge"
 import { CommentDialog } from "./comment-dialog"
 import { useAppSelector } from "../../store/hooks"
 import { Murmur, murmurAPI } from "../../lib/murmur-api"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu"
+import { toast } from "sonner"
 
 interface Comment {
   id: number
@@ -32,7 +40,8 @@ export function Tweet({
   comments = 10,
   likes = 50,
   isVerified = true,
-  murmur
+  murmur,
+  onDelete
 }: {
   id?: string
   username?: string
@@ -46,6 +55,7 @@ export function Tweet({
   views?: number
   isVerified?: boolean
   murmur?: Murmur
+  onDelete?: () => void
 }) {
   const navigate = useNavigate()
   const handleTweetClick = (e: React.MouseEvent) => {
@@ -174,6 +184,24 @@ export function Tweet({
     return `${Math.floor(diffInSeconds / 86400)}d`
   }
 
+  const handleDelete = async () => {
+    if (!id || !user) return;
+    
+    try {
+      await murmurAPI.deleteMurmur(id);
+      toast.success("Post deleted successfully");
+      // Call the onDelete callback if provided
+      if (onDelete) {
+        onDelete();
+      }
+    } catch (error) {
+      console.error('Error deleting murmur:', error);
+      toast.error("Failed to delete post");
+    }
+  };
+
+  const isOwner = user && (murmur?.userId === user.id || murmur?.user?.id === user.id);
+
   return (
     <>
       <div className="border-b p-3 md:p-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors cursor-pointer" onClick={handleTweetClick}>
@@ -195,6 +223,26 @@ export function Tweet({
               <span className="text-gray-500 text-sm md:text-base">{handle}</span>
               <span className="text-gray-500">·</span>
               <span className="text-gray-500 text-sm md:text-base">{timestamp}</span>
+              {isOwner && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="ml-auto h-8 w-8 p-0">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete();
+                      }}
+                      className="text-red-600 focus:text-red-600 focus:bg-red-600/10"
+                    >
+                      Delete Post
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
             <div className="mt-1 mb-3 text-sm md:text-base break-words">
               {content}

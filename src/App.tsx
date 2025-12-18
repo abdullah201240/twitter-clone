@@ -14,6 +14,7 @@ import { ProfilePage } from './src/pages/profile'
 import { PostDetailPage } from './src/pages/post-detail'
 import { LoginPage } from './src/pages/login'
 import { SignupPage } from './src/pages/signup'
+import { Toaster } from './src/components/ui/sonner'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated)
@@ -26,6 +27,7 @@ function AppContent() {
 
   return (
     <Router>
+      <Toaster />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />

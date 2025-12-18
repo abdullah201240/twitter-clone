@@ -84,6 +84,10 @@ export function TwitterFeed({ type, newPost }: TwitterFeedProps) {
         }
     }, [loadMoreTweets, isLoading, hasMore])
 
+    const handleDelete = (deletedId: string) => {
+        setTweets(prev => prev.filter(tweet => tweet.id !== deletedId));
+    };
+
     return (
         <div>
             {tweets.map((murmur) => (
@@ -104,6 +108,7 @@ export function TwitterFeed({ type, newPost }: TwitterFeedProps) {
                     views={0}
                     isVerified={false}
                     murmur={murmur}
+                    onDelete={() => handleDelete(murmur.id)}
                 />
             ))}
 
