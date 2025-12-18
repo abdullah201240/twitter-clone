@@ -58,10 +58,15 @@ export function TwitterFeed({ type, newPost }: TwitterFeedProps) {
             if (tweetIds.length === 0) return;
 
             try {
-                const statuses = await murmurAPI.getMultipleLikeStatus(tweetIds);
-                setLikeStatuses(prev => ({ ...prev, ...statuses }));
-                // Mark these IDs as fetched
-                tweetIds.forEach(id => fetchedLikeStatuses.current.add(id));
+                // Fetch like statuses in batches to avoid URL length limits
+                const batchSize = 50;
+                for (let i = 0; i < tweetIds.length; i += batchSize) {
+                    const batch = tweetIds.slice(i, i + batchSize);
+                    const statuses = await murmurAPI.getMultipleLikeStatus(batch);
+                    setLikeStatuses(prev => ({ ...prev, ...statuses }));
+                    // Mark these IDs as fetched
+                    batch.forEach(id => fetchedLikeStatuses.current.add(id));
+                }
             } catch (error) {
                 console.error('Error fetching like statuses:', error);
             }
@@ -79,7 +84,7 @@ export function TwitterFeed({ type, newPost }: TwitterFeedProps) {
 
         try {
             // Load tweets in larger batches for better performance
-            const batchSize = 10
+            const batchSize = 20
             let allNewTweets: Murmur[] = []
             let currentCursor: string | null = nextCursor
             let hasMoreItems: boolean = hasMore
@@ -130,9 +135,9 @@ export function TwitterFeed({ type, newPost }: TwitterFeedProps) {
                     let response: TimelineResponse;
 
                     if (type === 'for-you') {
-                        response = await murmurAPI.getTimeline(10); // Smaller initial batch
+                        response = await murmurAPI.getTimeline(20); // Larger initial batch
                     } else {
-                        response = await murmurAPI.getFeed(10); // Smaller initial batch
+                        response = await murmurAPI.getFeed(20); // Larger initial batch
                     }
 
                     // Filter out duplicates

@@ -30,13 +30,27 @@ export function TrendingSection() {
 
   const loadSuggestedUsers = useCallback(async () => {
     try {
-      // Get timeline to extract popular users
-      const timeline = await murmurAPI.getTimeline(20)
-      
+      // Check if we have cached suggestions that are less than 5 minutes old
+      const cachedSuggestions = localStorage.getItem('suggestedUsers');
+      const cacheTimestamp = localStorage.getItem('suggestedUsers_timestamp');
+
+      if (cachedSuggestions && cacheTimestamp) {
+        const ageInMinutes = (Date.now() - parseInt(cacheTimestamp)) / (1000 * 60);
+        if (ageInMinutes < 5) { // Use cache if less than 5 minutes old
+          const parsedSuggestions = JSON.parse(cachedSuggestions);
+          setSuggestedUsers(parsedSuggestions);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Get a smaller timeline sample to reduce data transfer
+      const timeline = await murmurAPI.getTimeline(10)
+
       // Extract unique users from timeline
       const userMap = new Map()
       const userIdsToCheck: string[] = []
-      
+
       timeline.data.forEach(murmur => {
         if (!userMap.has(murmur.user.id) && murmur.user.id !== user?.id) {
           userMap.set(murmur.user.id, {
@@ -48,19 +62,38 @@ export function TrendingSection() {
           userIdsToCheck.push(murmur.user.id);
         }
       })
-      
-      // Check follow status for each user
-      const followStatusPromises = userIdsToCheck.map(userId => 
-        profileAPI.getFollowStatus(userId).catch(() => ({ isFollowing: false }))
-      );
-      
-      const followStatusResults = await Promise.all(followStatusPromises);
-      
+
+      // Limit the number of users to check to reduce API calls
+      const limitedUserIds = userIdsToCheck.slice(0, 10);
+
+      // Check follow status for all users in a single batch call
+      let followStatusResults: Record<string, boolean> = {};
+
+      try {
+        followStatusResults = await profileAPI.getMultipleFollowStatus(limitedUserIds);
+      } catch (error) {
+        console.error('Error checking follow status:', error);
+        // If batch call fails, fall back to individual calls
+        for (let i = 0; i < Math.min(limitedUserIds.length, 5); i++) {
+          try {
+            const status = await profileAPI.getFollowStatus(limitedUserIds[i]);
+            followStatusResults[limitedUserIds[i]] = status.isFollowing;
+          } catch (error) {
+            console.error('Error checking follow status:', error);
+            followStatusResults[limitedUserIds[i]] = false;
+          }
+        }
+      }
+
       // Filter out users that are already being followed
-      const usersArray = Array.from(userMap.values()).filter((_, index) => {
-        return !followStatusResults[index]?.isFollowing;
+      const usersArray = Array.from(userMap.values()).slice(0, 10).filter((user) => {
+        return !followStatusResults[user.id];
       }).slice(0, 3);
-      
+
+      // Cache the results
+      localStorage.setItem('suggestedUsers', JSON.stringify(usersArray));
+      localStorage.setItem('suggestedUsers_timestamp', Date.now().toString());
+
       setSuggestedUsers(usersArray);
     } catch (error) {
       console.error('Error loading suggested users:', error)
@@ -80,13 +113,13 @@ export function TrendingSection() {
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
-        <Input 
-          placeholder="Search" 
+        <Input
+          placeholder="Search"
           className="pl-10 rounded-full bg-gray-100 dark:bg-gray-900 border-0 focus-visible:ring-0"
         />
       </div>
 
-     
+
 
       {/* Suggested for you */}
       <Card className="border-none shadow-none">
@@ -98,8 +131,8 @@ export function TrendingSection() {
             <div className="p-4 text-center text-gray-500">Loading suggestions...</div>
           ) : suggestedUsers.length > 0 ? (
             suggestedUsers.map((user) => (
-              <div 
-                key={user.id} 
+              <div
+                key={user.id}
                 className="flex items-center p-4 hover:bg-gray-100 dark:hover:bg-gray-900 cursor-pointer transition-colors"
                 onClick={() => navigate(`/profile/${user.id}`)}>
                 <div className="flex-1">
@@ -107,10 +140,10 @@ export function TrendingSection() {
                   <p className="text-gray-500">{user.username}</p>
                   {user.followersCount !== undefined && (
                     <p className="text-gray-500 text-sm">
-                      {user.followersCount >= 1000000 
-                        ? `${(user.followersCount / 1000000).toFixed(1)}M` 
-                        : user.followersCount >= 1000 
-                          ? `${(user.followersCount / 1000).toFixed(1)}K` 
+                      {user.followersCount >= 1000000
+                        ? `${(user.followersCount / 1000000).toFixed(1)}M`
+                        : user.followersCount >= 1000
+                          ? `${(user.followersCount / 1000).toFixed(1)}K`
                           : user.followersCount} followers
                     </p>
                   )}

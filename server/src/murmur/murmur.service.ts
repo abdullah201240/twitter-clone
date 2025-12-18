@@ -73,13 +73,30 @@ export class MurmurService {
   }
 
   async getUserMurmurs(userId: string, limit: number = 10, cursor?: string): Promise<TimelineResponse> {
+    // Optimized query with proper indexing and select optimization
     const query = this.murmurRepository
       .createQueryBuilder('murmur')
-      .innerJoinAndSelect('murmur.user', 'user')
+      .select([
+        'murmur.id',
+        'murmur.content',
+        'murmur.likeCount',
+        'murmur.replyCount',
+        'murmur.repostCount',
+        'murmur.mediaUrl',
+        'murmur.userId',
+        'murmur.createdAt',
+        'murmur.updatedAt',
+        'user.id',
+        'user.name',
+        'user.username',
+        'user.avatar'
+      ])
+      .innerJoin('murmur.user', 'user')
       .where('murmur.userId = :userId', { userId })
       .orderBy('murmur.createdAt', 'DESC')
-      .take(limit + 1);
+      .limit(limit + 1);
 
+    // Apply cursor if provided
     if (cursor) {
       query.andWhere('murmur.createdAt < :cursor', { cursor: new Date(cursor) });
     }
@@ -110,11 +127,30 @@ export class MurmurService {
     // Optimized query using feed repository with proper indexing
     const query = this.feedRepository
       .createQueryBuilder('feed')
-      .innerJoinAndSelect('feed.murmur', 'murmur')
-      .innerJoinAndSelect('murmur.user', 'user')
+      .select([
+        'feed.id',
+        'feed.userId',
+        'feed.murmurId',
+        'feed.createdAt',
+        'murmur.id',
+        'murmur.content',
+        'murmur.likeCount',
+        'murmur.replyCount',
+        'murmur.repostCount',
+        'murmur.mediaUrl',
+        'murmur.userId',
+        'murmur.createdAt',
+        'murmur.updatedAt',
+        'user.id',
+        'user.name',
+        'user.username',
+        'user.avatar'
+      ])
+      .innerJoin('feed.murmur', 'murmur')
+      .innerJoin('murmur.user', 'user')
       .where('feed.userId = :userId', { userId })
       .orderBy('feed.createdAt', 'DESC')
-      .take(limit + 1);
+      .limit(limit + 1);
 
     // Apply cursor if provided
     if (cursor) {
@@ -133,12 +169,27 @@ export class MurmurService {
   }
 
   async getGlobalTimeline(limit: number = 10, cursor?: string): Promise<TimelineResponse> {
-    // Build query for cursor-based pagination
+    // Build query for cursor-based pagination with optimized selects
     const query = this.murmurRepository
       .createQueryBuilder('murmur')
-      .innerJoinAndSelect('murmur.user', 'user')
+      .select([
+        'murmur.id',
+        'murmur.content',
+        'murmur.likeCount',
+        'murmur.replyCount',
+        'murmur.repostCount',
+        'murmur.mediaUrl',
+        'murmur.userId',
+        'murmur.createdAt',
+        'murmur.updatedAt',
+        'user.id',
+        'user.name',
+        'user.username',
+        'user.avatar'
+      ])
+      .innerJoin('murmur.user', 'user')
       .orderBy('murmur.createdAt', 'DESC')
-      .take(limit + 1);
+      .limit(limit + 1);
 
     // Apply cursor if provided
     if (cursor) {
