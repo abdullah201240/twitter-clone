@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { Tweet } from "./tweet"
 import { Loader2 } from "lucide-react"
 import { murmurAPI, Murmur, TimelineResponse } from "../../lib/murmur-api"
+import { useAppSelector } from "../../store/hooks"
 
 type FeedType = 'for-you' | 'following'
 
@@ -15,8 +16,10 @@ export function TwitterFeed({ type, newPost }: TwitterFeedProps) {
     const [isLoading, setIsLoading] = useState(false)
     const [nextCursor, setNextCursor] = useState<string | null>(null)
     const [hasMore, setHasMore] = useState(true)
+    const [likeStatuses, setLikeStatuses] = useState<Record<string, boolean>>({})
     const observerTarget = useRef(null)
     const seenIds = useRef(new Set<string>())
+    const user = useAppSelector((state) => state.auth.user)
 
     // Handle new post
     useEffect(() => {
@@ -25,6 +28,29 @@ export function TwitterFeed({ type, newPost }: TwitterFeedProps) {
             seenIds.current.add(newPost.id)
         }
     }, [newPost])
+
+    // Fetch like statuses for all tweets in batch
+    useEffect(() => {
+        const fetchLikeStatuses = async () => {
+            if (!user || tweets.length === 0) return;
+            
+            // Get IDs of tweets that don't have like status cached yet
+            const tweetIds = tweets
+                .filter(tweet => !(tweet.id in likeStatuses))
+                .map(tweet => tweet.id);
+                
+            if (tweetIds.length === 0) return;
+            
+            try {
+                const statuses = await murmurAPI.getMultipleLikeStatus(tweetIds);
+                setLikeStatuses(prev => ({ ...prev, ...statuses }));
+            } catch (error) {
+                console.error('Error fetching like statuses:', error);
+            }
+        };
+        
+        fetchLikeStatuses();
+    }, [tweets, user]);
 
     const loadMoreTweets = useCallback(async () => {
         if (isLoading || !hasMore) return
@@ -109,6 +135,8 @@ export function TwitterFeed({ type, newPost }: TwitterFeedProps) {
                     isVerified={false}
                     murmur={murmur}
                     onDelete={() => handleDelete(murmur.id)}
+                    isLiked={likeStatuses[murmur.id] ?? false}
+                    onLikeChange={(liked) => setLikeStatuses(prev => ({ ...prev, [murmur.id]: liked }))}
                 />
             ))}
 

@@ -118,6 +118,27 @@ export class MurmurController {
     return { isLiked };
   }
 
+  @Get('/murmurs/like-status')
+  @UseGuards(JwtAuthGuard)
+  async getMultipleLikeStatus(
+    @Req() request: Request,
+    @Query('ids') murmurIds: string[],
+  ) {
+    const user = request.user as any;
+    
+    // Validate input
+    if (!murmurIds || !Array.isArray(murmurIds) || murmurIds.length === 0) {
+      return {};
+    }
+    
+    // Limit the number of IDs to prevent abuse
+    if (murmurIds.length > 100) {
+      murmurIds = murmurIds.slice(0, 100);
+    }
+    
+    return await this.likeService.getMultipleLikeStatus(user.userId, murmurIds);
+  }
+
   // Comment endpoints
   @Post('/murmurs/:murmurId/comments')
   @UseGuards(JwtAuthGuard)

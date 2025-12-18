@@ -3,6 +3,7 @@ import { User } from './user.entity';
 
 @Entity('murmurs')
 @Index('idx_user_created', ['userId', 'createdAt'])
+@Index('idx_created_at', ['createdAt'])
 export class Murmur {
   @PrimaryGeneratedColumn('uuid')
   id!: string;

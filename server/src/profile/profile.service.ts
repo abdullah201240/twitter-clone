@@ -23,6 +23,20 @@ export class ProfileService {
     this.logger.log(`Fetching profile for user: ${userId}`);
     const user = await this.userRepository.findOne({
       where: { id: userId },
+      select: [
+        'id',
+        'name',
+        'username',
+        'email',
+        'bio',
+        'location',
+        'website',
+        'avatar',
+        'coverImage',
+        'followersCount',
+        'followingCount',
+        'createdAt'
+      ]
     });
 
     if (!user) {
@@ -36,24 +50,46 @@ export class ProfileService {
 
   async updateProfile(userId: string, updateData: UpdateProfileDto): Promise<ProfileResponseDto> {
     this.logger.log(`Updating profile for user: ${userId}`);
-    const user = await this.userRepository.findOne({
-      where: { id: userId },
-    });
+    
+    // Update user profile using query builder for better performance
+    const updateResult = await this.userRepository
+      .createQueryBuilder()
+      .update()
+      .set({
+        ...(updateData.name && { name: updateData.name }),
+        ...(updateData.bio !== undefined && { bio: updateData.bio }),
+        ...(updateData.location !== undefined && { location: updateData.location }),
+        ...(updateData.website !== undefined && { website: updateData.website }),
+      })
+      .where('id = :userId', { userId })
+      .execute();
 
-    if (!user) {
+    if (updateResult.affected === 0) {
       this.logger.warn(`Profile update failed: User not found for ID ${userId}`);
       throw new NotFoundException('User not found');
     }
 
-    // Update allowed fields
-    if (updateData.name) user.name = updateData.name;
-    if (updateData.bio !== undefined) user.bio = updateData.bio;
-    if (updateData.location !== undefined) user.location = updateData.location;
-    if (updateData.website !== undefined) user.website = updateData.website;
+    // Fetch updated user data
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      select: [
+        'id',
+        'name',
+        'username',
+        'email',
+        'bio',
+        'location',
+        'website',
+        'avatar',
+        'coverImage',
+        'followersCount',
+        'followingCount',
+        'createdAt'
+      ]
+    });
 
-    await this.userRepository.save(user);
     this.logger.log(`Successfully updated profile for user: ${userId}`);
-    return await this.mapToProfileResponse(user);
+    return await this.mapToProfileResponse(user!);
   }
 
   async uploadAvatar(userId: string, file: Express.Multer.File): Promise<ProfileResponseDto> {
@@ -63,28 +99,55 @@ export class ProfileService {
       throw new BadRequestException('No file uploaded');
     }
 
-    const user = await this.userRepository.findOne({
+    // Get current avatar URL before updating
+    const currentUser = await this.userRepository.findOne({
       where: { id: userId },
+      select: ['avatar']
     });
 
-    if (!user) {
+    if (!currentUser) {
       this.logger.warn(`Avatar upload failed: User not found for ID ${userId}`);
       throw new NotFoundException('User not found');
     }
 
     // Delete old avatar if exists
-    if (user.avatar) {
-      const oldFilename = this.uploadService.extractFilenameFromUrl(user.avatar);
+    if (currentUser.avatar) {
+      const oldFilename = this.uploadService.extractFilenameFromUrl(currentUser.avatar);
       if (oldFilename) {
         this.uploadService.deleteFile(oldFilename);
       }
     }
 
-    // Set new avatar
-    user.avatar = this.uploadService.getPublicUrl(file.filename);
-    await this.userRepository.save(user);
+    // Update avatar using query builder for better performance
+    await this.userRepository
+      .createQueryBuilder()
+      .update()
+      .set({ avatar: this.uploadService.getPublicUrl(file.filename) })
+      .where('id = :userId', { userId })
+      .execute();
+
     this.logger.log(`Successfully uploaded avatar for user: ${userId}`);
-    return await this.mapToProfileResponse(user);
+    
+    // Fetch updated user data
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      select: [
+        'id',
+        'name',
+        'username',
+        'email',
+        'bio',
+        'location',
+        'website',
+        'avatar',
+        'coverImage',
+        'followersCount',
+        'followingCount',
+        'createdAt'
+      ]
+    });
+
+    return await this.mapToProfileResponse(user!);
   }
 
   async uploadCoverImage(userId: string, file: Express.Multer.File): Promise<ProfileResponseDto> {
@@ -94,28 +157,55 @@ export class ProfileService {
       throw new BadRequestException('No file uploaded');
     }
 
-    const user = await this.userRepository.findOne({
+    // Get current cover image URL before updating
+    const currentUser = await this.userRepository.findOne({
       where: { id: userId },
+      select: ['coverImage']
     });
 
-    if (!user) {
+    if (!currentUser) {
       this.logger.warn(`Cover image upload failed: User not found for ID ${userId}`);
       throw new NotFoundException('User not found');
     }
 
     // Delete old cover image if exists
-    if (user.coverImage) {
-      const oldFilename = this.uploadService.extractFilenameFromUrl(user.coverImage);
+    if (currentUser.coverImage) {
+      const oldFilename = this.uploadService.extractFilenameFromUrl(currentUser.coverImage);
       if (oldFilename) {
         this.uploadService.deleteFile(oldFilename);
       }
     }
 
-    // Set new cover image
-    user.coverImage = this.uploadService.getPublicUrl(file.filename);
-    await this.userRepository.save(user);
+    // Update cover image using query builder for better performance
+    await this.userRepository
+      .createQueryBuilder()
+      .update()
+      .set({ coverImage: this.uploadService.getPublicUrl(file.filename) })
+      .where('id = :userId', { userId })
+      .execute();
+
     this.logger.log(`Successfully uploaded cover image for user: ${userId}`);
-    return await this.mapToProfileResponse(user);
+    
+    // Fetch updated user data
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      select: [
+        'id',
+        'name',
+        'username',
+        'email',
+        'bio',
+        'location',
+        'website',
+        'avatar',
+        'coverImage',
+        'followersCount',
+        'followingCount',
+        'createdAt'
+      ]
+    });
+
+    return await this.mapToProfileResponse(user!);
   }
 
   private async mapToProfileResponse(user: User): Promise<ProfileResponseDto> {

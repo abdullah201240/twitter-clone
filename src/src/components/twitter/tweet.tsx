@@ -41,7 +41,9 @@ export function Tweet({
   likes = 50,
   isVerified = true,
   murmur,
-  onDelete
+  onDelete,
+  isLiked: externalIsLiked,
+  onLikeChange
 }: {
   id?: string
   username?: string
@@ -56,6 +58,8 @@ export function Tweet({
   isVerified?: boolean
   murmur?: Murmur
   onDelete?: () => void
+  isLiked?: boolean
+  onLikeChange?: (liked: boolean) => void
 }) {
   const navigate = useNavigate()
   const handleTweetClick = (e: React.MouseEvent) => {
@@ -78,17 +82,20 @@ export function Tweet({
     }
   }
   const user = useAppSelector((state) => state.auth.user)
-  const [isLiked, setIsLiked] = useState(false)
+  const [localIsLiked, setLocalIsLiked] = useState(false)
   const [likeCount, setLikeCount] = useState(likes)
+  
+  // Use external isLiked prop if provided, otherwise use local state
+  const isLiked = externalIsLiked !== undefined ? externalIsLiked : localIsLiked
   const [commentsList, setCommentsList] = useState<Comment[]>([])
   const [commentCount, setCommentCount] = useState(comments)
   const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false)
 
-  // Load like status on mount
+  // Load like status on mount only if external isLiked is not provided
   useEffect(() => {
-    if (!id || !user) return
+    if (externalIsLiked !== undefined || !id || !user) return
     loadLikeStatus()
-  }, [id, user])
+  }, [id, user, externalIsLiked])
 
   // Load comments when dialog opens
   useEffect(() => {
@@ -101,7 +108,7 @@ export function Tweet({
     if (!id || !user) return
     try {
       const status = await murmurAPI.getLikeStatus(id)
-      setIsLiked(status.isLiked)
+      setLocalIsLiked(status.isLiked)
     } catch (error) {
       console.error('Error loading like status:', error)
     }
@@ -133,7 +140,14 @@ export function Tweet({
 
     try {
       const result = await murmurAPI.toggleLike(id)
-      setIsLiked(result.liked)
+      
+      // Update local state or notify parent
+      if (externalIsLiked !== undefined && onLikeChange) {
+        onLikeChange(result.liked);
+      } else {
+        setLocalIsLiked(result.liked);
+      }
+      
       setLikeCount(result.likeCount)
     } catch (error) {
       console.error('Error toggling like:', error)

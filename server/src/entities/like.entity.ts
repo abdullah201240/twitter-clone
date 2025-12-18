@@ -6,6 +6,7 @@ import { Murmur } from './murmur.entity';
 @Unique('unique_user_murmur_like', ['userId', 'murmurId'])
 @Index('idx_murmur_likes', ['murmurId'])
 @Index('idx_user_likes', ['userId'])
+@Index('idx_user_murmur', ['userId', 'murmurId'])
 export class Like {
   @PrimaryGeneratedColumn('uuid')
   id!: string;

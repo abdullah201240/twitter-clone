@@ -110,6 +110,23 @@ class MurmurAPI {
     return response.data;
   }
 
+  async getMultipleLikeStatus(murmurIds: string[]): Promise<Record<string, boolean>> {
+    // Validate input
+    if (!murmurIds || murmurIds.length === 0) {
+      return {};
+    }
+    
+    // Limit the number of IDs to prevent abuse
+    const limitedIds = murmurIds.slice(0, 100);
+    
+    const params = new URLSearchParams();
+    limitedIds.forEach(id => params.append('ids', id));
+    const response = await this.api.get<Record<string, boolean>>(
+      `http://localhost:3001/api/murmurs/like-status?${params}`
+    );
+    return response.data;
+  }
+
   async createComment(murmurId: string, content: string): Promise<CommentData> {
     const response = await this.api.post<CommentData>(
       `http://localhost:3001/api/murmurs/${murmurId}/comments`,

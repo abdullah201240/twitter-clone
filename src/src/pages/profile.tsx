@@ -37,6 +37,7 @@ export function ProfilePage() {
         website: "",
     })
     const [uploading, setUploading] = useState(false)
+    const [likeStatuses, setLikeStatuses] = useState<Record<string, boolean>>({})
     
     // Determine if we're viewing our own profile
     const isOwnProfile = !userId || (currentUser && userId === currentUser.id)
@@ -44,6 +45,29 @@ export function ProfilePage() {
     useEffect(() => {
         loadProfile()
     }, [userId, currentUser])
+
+    // Fetch like statuses for all tweets in batch
+    useEffect(() => {
+        const fetchLikeStatuses = async () => {
+            if (!currentUser || userMurmurs.length === 0) return;
+            
+            // Get IDs of tweets that don't have like status cached yet
+            const tweetIds = userMurmurs
+                .filter(tweet => !(tweet.id in likeStatuses))
+                .map(tweet => tweet.id);
+                
+            if (tweetIds.length === 0) return;
+            
+            try {
+                const statuses = await murmurAPI.getMultipleLikeStatus(tweetIds);
+                setLikeStatuses(prev => ({ ...prev, ...statuses }));
+            } catch (error) {
+                console.error('Error fetching like statuses:', error);
+            }
+        };
+        
+        fetchLikeStatuses();
+    }, [userMurmurs, currentUser]);
 
     const loadFollowers = async () => {
         if (!profile || !currentUser) return;
@@ -419,6 +443,8 @@ export function ProfilePage() {
                                     isVerified={false}
                                     murmur={murmur}
                                     onDelete={() => setUserMurmurs(prev => prev.filter(m => m.id !== murmur.id))}
+                                    isLiked={likeStatuses[murmur.id] ?? false}
+                                    onLikeChange={(liked) => setLikeStatuses(prev => ({ ...prev, [murmur.id]: liked }))}
                                 />
                             ))}
                         </div>

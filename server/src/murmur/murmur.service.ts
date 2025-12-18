@@ -37,11 +37,24 @@ export class MurmurService {
     const savedMurmur = await this.murmurRepository.save(murmur);
     
 
-    // Fan-out on write: Add to creator's feed
-    await this.feedRepository.insert({
-      userId,
-      murmurId: savedMurmur.id,
-    });
+    // Fan-out on write: Add to creator's feed using query builder for better performance
+    // Ignore duplicate key errors as the unique constraint will prevent duplicates
+    try {
+      await this.feedRepository
+        .createQueryBuilder()
+        .insert()
+        .into('feed')
+        .values({
+          userId: userId,
+          murmurId: savedMurmur.id,
+        })
+        .execute();
+    } catch (error) {
+      // Ignore duplicate key errors
+      if (!error.message.includes('Duplicate entry') && !error.message.includes('UNIQUE constraint failed')) {
+        throw error;
+      }
+    }
 
     return savedMurmur;
   }
@@ -94,7 +107,7 @@ export class MurmurService {
   }
 
   async getTimeline(userId: string, limit: number = 10, cursor?: string): Promise<TimelineResponse> {
-    // Build query for cursor-based pagination
+    // Optimized query using feed repository with proper indexing
     const query = this.feedRepository
       .createQueryBuilder('feed')
       .innerJoinAndSelect('feed.murmur', 'murmur')

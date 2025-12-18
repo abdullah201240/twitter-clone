@@ -6,10 +6,6 @@ import { useAppSelector } from './src/store/hooks'
 import { useAuthInit } from './src/hooks/useAuthInit'
 import { TwitterLayout } from './src/components/twitter/layout'
 import { HomePage } from './src/pages/home'
-import { ExplorePage } from './src/pages/explore'
-import { NotificationsPage } from './src/pages/notifications'
-import { MessagesPage } from './src/pages/messages'
-import { BookmarksPage } from './src/pages/bookmarks'
 import { ProfilePage } from './src/pages/profile'
 import { PostDetailPage } from './src/pages/post-detail'
 import { LoginPage } from './src/pages/login'
@@ -37,10 +33,6 @@ function AppContent() {
           </ProtectedRoute>
         }>
           <Route index element={<HomePage />} />
-          <Route path="explore" element={<ExplorePage />} />
-          <Route path="notifications" element={<NotificationsPage />} />
-          <Route path="messages" element={<MessagesPage />} />
-          <Route path="bookmarks" element={<BookmarksPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="profile/:userId" element={<ProfilePage />} />
           <Route path="post/:postId" element={<PostDetailPage />} />

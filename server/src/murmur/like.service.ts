@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Like } from '../entities/like.entity';
 import { Murmur } from '../entities/murmur.entity';
 
@@ -23,14 +23,21 @@ export class LikeService {
       // Unlike
       await this.likeRepository.remove(existingLike);
       
-      // Update murmur like count
-      const murmur = await this.murmurRepository.findOne({ where: { id: murmurId } });
-      if (murmur) {
-        murmur.likeCount = Math.max(0, murmur.likeCount - 1);
-        await this.murmurRepository.save(murmur);
-      }
+      // Update murmur like count using query builder for better performance
+      await this.murmurRepository
+        .createQueryBuilder()
+        .update()
+        .set({ likeCount: () => 'GREATEST(likeCount - 1, 0)' })
+        .where('id = :murmurId', { murmurId })
+        .execute();
       
-      return { liked: false, likeCount: murmur?.likeCount || 0 };
+      // Get updated like count
+      const updatedMurmur = await this.murmurRepository.findOne({ 
+        where: { id: murmurId },
+        select: ['likeCount']
+      });
+      
+      return { liked: false, likeCount: updatedMurmur?.likeCount || 0 };
     } else {
       // Like
       const newLike = this.likeRepository.create({
@@ -39,14 +46,21 @@ export class LikeService {
       });
       await this.likeRepository.save(newLike);
       
-      // Update murmur like count
-      const murmur = await this.murmurRepository.findOne({ where: { id: murmurId } });
-      if (murmur) {
-        murmur.likeCount += 1;
-        await this.murmurRepository.save(murmur);
-      }
+      // Update murmur like count using query builder for better performance
+      await this.murmurRepository
+        .createQueryBuilder()
+        .update()
+        .set({ likeCount: () => 'likeCount + 1' })
+        .where('id = :murmurId', { murmurId })
+        .execute();
       
-      return { liked: true, likeCount: murmur?.likeCount || 1 };
+      // Get updated like count
+      const updatedMurmur = await this.murmurRepository.findOne({ 
+        where: { id: murmurId },
+        select: ['likeCount']
+      });
+      
+      return { liked: true, likeCount: updatedMurmur?.likeCount || 1 };
     }
   }
 
@@ -55,6 +69,38 @@ export class LikeService {
       where: { userId, murmurId },
     });
     return !!like;
+  }
+
+  async getMultipleLikeStatus(userId: string, murmurIds: string[]): Promise<Record<string, boolean>> {
+    try {
+      // Validate input
+      if (!murmurIds || murmurIds.length === 0) {
+        return {};
+      }
+      
+      // Fetch all likes for the given user and murmur IDs in a single query
+      const likes = await this.likeRepository.find({
+        where: {
+          userId,
+          murmurId: In(murmurIds),
+        },
+      });
+      
+      // Create a set of liked murmur IDs for fast lookup
+      const likedMurmurIds = new Set(likes.map(like => like.murmurId));
+      
+      // Build the result object
+      const result: Record<string, boolean> = {};
+      for (const murmurId of murmurIds) {
+        result[murmurId] = likedMurmurIds.has(murmurId);
+      }
+      
+      return result;
+    } catch (error) {
+      // Log error but don't fail the entire request
+      console.error('Error fetching multiple like statuses:', error);
+      return {};
+    }
   }
 
   async getLikeCount(murmurId: string): Promise<number> {

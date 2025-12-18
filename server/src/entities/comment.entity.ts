@@ -5,6 +5,7 @@ import { Murmur } from './murmur.entity';
 @Entity('comments')
 @Index('idx_murmur_comments', ['murmurId'])
 @Index('idx_user_comments', ['userId'])
+@Index('idx_murmur_created', ['murmurId', 'createdAt'])
 export class Comment {
   @PrimaryGeneratedColumn('uuid')
   id!: string;

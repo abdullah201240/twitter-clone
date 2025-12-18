@@ -1,8 +1,9 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, Index, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, Index, ManyToOne, JoinColumn, Unique } from 'typeorm';
 import { User } from './user.entity';
 import { Murmur } from './murmur.entity';
 
 @Entity('feed')
+@Unique('unique_user_murmur_feed', ['userId', 'murmurId'])
 @Index('idx_user_created', ['userId', 'createdAt'])
 @Index('idx_murmur_user', ['murmurId', 'userId'])
 export class Feed {
