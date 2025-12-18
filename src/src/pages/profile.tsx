@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from "react"
 import { Button } from "../components/ui/button"
-import { ArrowLeft, Calendar, Link as LinkIcon, MapPin, Camera, MessageCircle, Heart } from "lucide-react"
+import { ArrowLeft, Calendar, Link as LinkIcon, MapPin, Camera } from "lucide-react"
 import { useAppSelector } from "../store/hooks"
 import { useNavigate, useParams } from "react-router-dom"
-import { profileAPI, ProfileData } from "../lib/profile-api"
+import { profileAPI, ProfileData, UserWithFollowStatus } from "../lib/profile-api"
 import { murmurAPI, Murmur } from "../lib/murmur-api"
 import { Input } from "../components/ui/input"
 import { Textarea } from "../components/ui/textarea"
@@ -15,6 +15,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "../components/ui/dialog"
+import { Tweet } from "../components/twitter/tweet"
 
 export function ProfilePage() {
     const currentUser = useAppSelector((state) => state.auth.user)
@@ -22,7 +23,12 @@ export function ProfilePage() {
     const { userId } = useParams<{ userId?: string }>()
     const [profile, setProfile] = useState<ProfileData | null>(null)
     const [userMurmurs, setUserMurmurs] = useState<Murmur[]>([])
+    const [followers, setFollowers] = useState<UserWithFollowStatus[]>([])
+    const [following, setFollowing] = useState<UserWithFollowStatus[]>([])
     const [loading, setLoading] = useState(true)
+    const [followersLoading, setFollowersLoading] = useState(false)
+    const [followingLoading, setFollowingLoading] = useState(false)
+    const [activeTab, setActiveTab] = useState<'posts' | 'followers' | 'following'>('posts')
     const [isEditOpen, setIsEditOpen] = useState(false)
     const [editData, setEditData] = useState({
         name: "",
@@ -38,6 +44,72 @@ export function ProfilePage() {
     useEffect(() => {
         loadProfile()
     }, [userId, currentUser])
+
+    const loadFollowers = async () => {
+        if (!profile || !currentUser) return;
+        
+        setFollowersLoading(true);
+        try {
+            const followersList = await profileAPI.getFollowers(profile.id);
+            // Update isFollowed status for each follower
+            const updatedFollowersList = followersList.map(follower => ({
+                ...follower,
+                isFollowed: follower.id !== currentUser.id // Don't show follow button for self
+            }));
+            setFollowers(updatedFollowersList);
+        } catch (error) {
+            console.error('Error loading followers:', error);
+        } finally {
+            setFollowersLoading(false);
+        }
+    }
+
+    const loadFollowing = async () => {
+        if (!profile || !currentUser) return;
+        
+        setFollowingLoading(true);
+        try {
+            const followingList = await profileAPI.getFollowing(profile.id);
+            // Update isFollowed status for each following
+            const updatedFollowingList = followingList.map(following => ({
+                ...following,
+                isFollowed: following.id !== currentUser.id // Don't show follow button for self
+            }));
+            setFollowing(updatedFollowingList);
+        } catch (error) {
+            console.error('Error loading following:', error);
+        } finally {
+            setFollowingLoading(false);
+        }
+    }
+
+    const handleFollowChange = (userId: string, isFollowing: boolean) => {
+        // Update the followers list
+        setFollowers(prev => prev.map(user => 
+            user.id === userId ? { ...user, isFollowed: isFollowing } : user
+        ));
+        
+        // Update the following list
+        setFollowing(prev => prev.map(user => 
+            user.id === userId ? { ...user, isFollowed: isFollowing } : user
+        ));
+        
+        // Refresh profile counts if this is the current user's profile
+        if (isOwnProfile && profile) {
+            loadProfile();
+        }
+    }
+
+    const handleTabChange = (tab: 'posts' | 'followers' | 'following') => {
+        setActiveTab(tab);
+        
+        // Load data when switching to followers or following tabs
+        if (tab === 'followers' && followers.length === 0) {
+            loadFollowers();
+        } else if (tab === 'following' && following.length === 0) {
+            loadFollowing();
+        }
+    }
 
     const loadProfile = async () => {
         try {
@@ -300,98 +372,136 @@ export function ProfilePage() {
             </div>
 
             {/* Tabs */}
-            <div className="flex  mt-4">
-                <div className="flex-1 p-4 hover:bg-gray-200/50 dark:hover:bg-gray-800/50 cursor-pointer transition text-center font-bold">
+            <div className="flex mt-4 border-b border-gray-200 dark:border-gray-800">
+                <div 
+                    className={`flex-1 p-4 hover:bg-gray-200/50 dark:hover:bg-gray-800/50 cursor-pointer transition text-center ${activeTab === 'posts' ? 'font-bold border-b-2 border-sky-500' : 'text-gray-500 font-medium'}`}
+                    onClick={() => setActiveTab('posts')}
+                >
                     Posts
                 </div>
-                <div className="flex-1 p-4 hover:bg-gray-200/50 dark:hover:bg-gray-800/50 cursor-pointer transition text-center text-gray-500 font-medium">
-                    Replies
+                <div 
+                    className={`flex-1 p-4 hover:bg-gray-200/50 dark:hover:bg-gray-800/50 cursor-pointer transition text-center ${activeTab === 'followers' ? 'font-bold border-b-2 border-sky-500' : 'text-gray-500 font-medium'}`}
+                    onClick={() => handleTabChange('followers')}
+                >
+                    Followers
+                    <span className="ml-1 text-gray-500">{profile.followersCount}</span>
                 </div>
-                <div className="flex-1 p-4 hover:bg-gray-200/50 dark:hover:bg-gray-800/50 cursor-pointer transition text-center text-gray-500 font-medium">
-                    Highlights
-                </div>
-                <div className="flex-1 p-4 hover:bg-gray-200/50 dark:hover:bg-gray-800/50 cursor-pointer transition text-center text-gray-500 font-medium">
-                    Media
-                </div>
-                <div className="flex-1 p-4 hover:bg-gray-200/50 dark:hover:bg-gray-800/50 cursor-pointer transition text-center text-gray-500 font-medium">
-                    Likes
+                <div 
+                    className={`flex-1 p-4 hover:bg-gray-200/50 dark:hover:bg-gray-800/50 cursor-pointer transition text-center ${activeTab === 'following' ? 'font-bold border-b-2 border-sky-500' : 'text-gray-500 font-medium'}`}
+                    onClick={() => handleTabChange('following')}
+                >
+                    Following
+                    <span className="ml-1 text-gray-500">{profile.followingCount}</span>
                 </div>
             </div>
 
-            {userMurmurs.length > 0 ? (
-                <div className="divide-y dark:divide-gray-800">
-                    {userMurmurs.map((murmur) => (
-                        <div key={murmur.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition">
-                            <div className="flex gap-3">
-                                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                                    {murmur.user.avatar ? (
-                                        <img 
-                                            src={murmur.user.avatar} 
-                                            alt={murmur.user.name} 
-                                            className="w-full h-full rounded-full object-cover"
-                                            onError={(e) => {
-                                                const target = e.target as HTMLImageElement;
-                                                target.style.display = 'none';
-                                                // Show the initial when image fails to load
-                                                const parent = target.parentElement;
-                                                if (parent) {
-                                                    const initialSpan = document.createElement('span');
-                                                    initialSpan.className = 'font-bold text-gray-700 dark:text-gray-300';
-                                                    initialSpan.textContent = murmur.user.name.charAt(0).toUpperCase();
-                                                    parent.appendChild(initialSpan);
-                                                }
-                                            }}
-                                        />
-                                    ) : (
-                                        <span className="font-bold text-gray-700 dark:text-gray-300">
-                                            {murmur.user.name.charAt(0).toUpperCase()}
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-bold text-gray-900 dark:text-white">{murmur.user.name}</span>
-                                        <span className="text-gray-500">@{murmur.user.username}</span>
-                                        <span className="text-gray-500">·</span>
-                                        <span className="text-gray-500">
-                                            {new Date(murmur.createdAt).toLocaleDateString('en-US', {
-                                                month: 'short',
-                                                day: 'numeric'
-                                            })}
-                                        </span>
-                                    </div>
-                                    <p className="mt-1 text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
-                                        {murmur.content}
-                                    </p>
-                                    {murmur.mediaUrl && (
-                                        <div className="mt-2 max-w-lg rounded-2xl overflow-hidden ">
-                                            <img 
-                                                src={murmur.mediaUrl} 
-                                                alt="Attachment" 
-                                                className="w-full h-auto object-contain"
-                                            />
-                                        </div>
-                                    )}
-                                    <div className="mt-3 flex gap-4 text-gray-500">
-                                        <button className="flex items-center gap-1 hover:text-sky-500 transition">
-                                            <MessageCircle className="w-4 h-4" />
-                                            <span>{murmur.replyCount}</span>
-                                        </button>
-                                       
-                                        <button className="flex items-center gap-1 hover:text-red-500 transition">
-                                            <Heart className="w-4 h-4" />
-                                            <span>{murmur.likeCount}</span>
-                                        </button>
-                                        
-                                    </div>
-                                </div>
-                            </div>
+            {/* Posts Tab */}
+            {activeTab === 'posts' && (
+                <div>
+                    {userMurmurs.length > 0 ? (
+                        <div className="divide-y dark:divide-gray-800">
+                            {userMurmurs.map((murmur) => (
+                                <Tweet
+                                    key={murmur.id}
+                                    id={murmur.id}
+                                    username={murmur.user.name}
+                                    handle={`@${murmur.user.username}`}
+                                    avatar={murmur.user.avatar}
+                                    timestamp={new Date(murmur.createdAt).toLocaleDateString('en-US', {
+                                        month: 'short',
+                                        day: 'numeric'
+                                    })}
+                                    content={murmur.content}
+                                    image={murmur.mediaUrl || undefined}
+                                    comments={murmur.replyCount}
+                                    likes={murmur.likeCount}
+                                    views={0}
+                                    isVerified={false}
+                                    murmur={murmur}
+                                />
+                            ))}
                         </div>
-                    ))}
+                    ) : (
+                        <div className="p-8 text-center text-gray-500">
+                            No posts yet.
+                        </div>
+                    )}
                 </div>
-            ) : (
-                <div className="p-8 text-center text-gray-500">
-                    No posts yet.
+            )}
+
+            {/* Followers Tab */}
+            {activeTab === 'followers' && (
+                <div>
+                    {followersLoading ? (
+                        <div className="p-4 text-center">Loading followers...</div>
+                    ) : followers.length > 0 ? (
+                        <div className="divide-y dark:divide-gray-800">
+                            {followers.map((user) => (
+                                <div key={user.id} className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer" onClick={() => navigate(`/profile/${user.id}`)}>
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
+                                            {user.avatar ? (
+                                                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <span className="font-bold text-gray-700 dark:text-gray-300">
+                                                    {user.name.charAt(0).toUpperCase()}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <div className="font-bold">{user.name}</div>
+                                            <div className="text-gray-500 text-sm">@{user.username}</div>
+                                        </div>
+                                    </div>
+                                    <div onClick={(e) => e.stopPropagation()}>
+                                        <FollowButton userId={user.id} initialFollowing={user.isFollowed} onFollowChange={(isFollowing) => handleFollowChange(user.id, isFollowing)} />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="p-8 text-center text-gray-500">
+                            No followers yet.
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Following Tab */}
+            {activeTab === 'following' && (
+                <div>
+                    {followingLoading ? (
+                        <div className="p-4 text-center">Loading following...</div>
+                    ) : following.length > 0 ? (
+                        <div className="divide-y dark:divide-gray-800">
+                            {following.map((user) => (
+                                <div key={user.id} className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer" onClick={() => navigate(`/profile/${user.id}`)}>
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
+                                            {user.avatar ? (
+                                                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <span className="font-bold text-gray-700 dark:text-gray-300">
+                                                    {user.name.charAt(0).toUpperCase()}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <div className="font-bold">{user.name}</div>
+                                            <div className="text-gray-500 text-sm">@{user.username}</div>
+                                        </div>
+                                    </div>
+                                    <div onClick={(e) => e.stopPropagation()}>
+                                        <FollowButton userId={user.id} initialFollowing={user.isFollowed} onFollowChange={(isFollowing) => handleFollowChange(user.id, isFollowing)} />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="p-8 text-center text-gray-500">
+                            Not following anyone yet.
+                        </div>
+                    )}
                 </div>
             )}
 

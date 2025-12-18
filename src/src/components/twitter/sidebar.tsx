@@ -72,36 +72,18 @@ export function Sidebar() {
           <Home className="h-7 w-7" />
           <span className="hidden lg:inline">Home</span>
         </NavLink>
-        <NavLink to="/explore" className={({ isActive }) => cn("flex items-center lg:gap-4 px-3 py-3 rounded-full text-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors justify-center lg:justify-start", isActive && "font-bold")}>
-          <Search className="h-7 w-7" />
-          <span className="hidden lg:inline">Explore</span>
-        </NavLink>
-        <NavLink to="/notifications" className={({ isActive }) => cn("flex items-center lg:gap-4 px-3 py-3 rounded-full text-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors justify-center lg:justify-start", isActive && "font-bold")}>
-          <Bell className="h-7 w-7" />
-          <span className="hidden lg:inline">Notifications</span>
-        </NavLink>
-        <NavLink to="/messages" className={({ isActive }) => cn("flex items-center lg:gap-4 px-3 py-3 rounded-full text-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors justify-center lg:justify-start", isActive && "font-bold")}>
-          <Mail className="h-7 w-7" />
-          <span className="hidden lg:inline">Messages</span>
-        </NavLink>
-        <NavLink to="/bookmarks" className={({ isActive }) => cn("flex items-center lg:gap-4 px-3 py-3 rounded-full text-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors justify-center lg:justify-start", isActive && "font-bold")}>
-          <Bookmark className="h-7 w-7" />
-          <span className="hidden lg:inline">Bookmarks</span>
-        </NavLink>
-        <NavLink to="/communities" className={({ isActive }) => cn("flex items-center lg:gap-4 px-3 py-3 rounded-full text-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors justify-center lg:justify-start", isActive && "font-bold")}>
-          <Users className="h-7 w-7" />
-          <span className="hidden lg:inline">Communities</span>
-        </NavLink>
+        
+        
+       
+       
+        
         {user && (
           <NavLink to={`/profile`} className={({ isActive }) => cn("flex items-center lg:gap-4 px-3 py-3 rounded-full text-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors justify-center lg:justify-start", isActive && "font-bold")}>
             <User className="h-7 w-7" />
             <span className="hidden lg:inline">Profile</span>
           </NavLink>
         )}
-        <Button variant="ghost" className="w-full justify-center lg:justify-start text-xl rounded-full px-3 py-3 h-auto">
-          <MoreHorizontal className="lg:mr-4 h-7 w-7" />
-          <span className="hidden lg:inline">More</span>
-        </Button>
+       
       </nav>
 
       {/* Post Button - Icon on tablet, full on desktop */}

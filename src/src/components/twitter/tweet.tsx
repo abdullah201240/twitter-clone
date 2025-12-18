@@ -18,6 +18,7 @@ interface Comment {
   content: string
   timestamp: string
   isVerified: boolean
+  avatar?: string | null
 }
 
 export function Tweet({
@@ -47,9 +48,23 @@ export function Tweet({
   murmur?: Murmur
 }) {
   const navigate = useNavigate()
-  const handleTweetClick = () => {
+  const handleTweetClick = (e: React.MouseEvent) => {
+    // Don't navigate to post detail if clicking on user name/avatar
+    if (e.target instanceof Element && e.target.closest('.user-profile-link')) {
+      return;
+    }
+    
     if (id) {
-      navigate(`/post/${id}`, { state: { murmur } })
+      navigate(`/post/${id}`, { state: { murmur } });
+    }
+  }
+  
+  const handleUserClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (murmur?.userId) {
+      navigate(`/profile/${murmur.userId}`);
+    } else if (murmur?.user?.id) {
+      navigate(`/profile/${murmur.user.id}`);
     }
   }
   const user = useAppSelector((state) => state.auth.user)
@@ -65,6 +80,13 @@ export function Tweet({
     loadLikeStatus()
   }, [id, user])
 
+  // Load comments when dialog opens
+  useEffect(() => {
+    if (isCommentDialogOpen && id) {
+      loadComments()
+    }
+  }, [isCommentDialogOpen, id])
+
   const loadLikeStatus = async () => {
     if (!id || !user) return
     try {
@@ -72,6 +94,26 @@ export function Tweet({
       setIsLiked(status.isLiked)
     } catch (error) {
       console.error('Error loading like status:', error)
+    }
+  }
+
+  const loadComments = async () => {
+    if (!id) return
+    try {
+      const commentData = await murmurAPI.getComments(id)
+      const formattedComments: Comment[] = commentData.map(comment => ({
+        id: parseInt(comment.id),
+        username: comment.user.name,
+        handle: `@${comment.user.username}`,
+        content: comment.content,
+        timestamp: formatTime(comment.createdAt),
+        isVerified: false,
+        avatar: comment.user.avatar
+      }))
+      setCommentsList(formattedComments)
+      setCommentCount(formattedComments.length)
+    } catch (error) {
+      console.error('Error loading comments:', error)
     }
   }
 
@@ -105,7 +147,8 @@ export function Tweet({
         handle: `@${newComment.user.username}`,
         content: newComment.content,
         timestamp: "Just now",
-        isVerified: false
+        isVerified: false,
+        avatar: newComment.user.avatar
       }
       setCommentsList(prev => [comment, ...prev])
       setCommentCount(prev => prev + 1)
@@ -120,11 +163,22 @@ export function Tweet({
     return num
   }
 
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+    
+    if (diffInSeconds < 60) return `${diffInSeconds}s`
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m`
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h`
+    return `${Math.floor(diffInSeconds / 86400)}d`
+  }
+
   return (
     <>
       <div className="border-b p-3 md:p-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors cursor-pointer" onClick={handleTweetClick}>
         <div className="flex gap-2 md:gap-4">
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 user-profile-link" onClick={handleUserClick}>
             <Avatar className="h-10 w-10 md:h-12 md:w-12">
               <AvatarImage src={avatar || undefined} alt={username} />
               <AvatarFallback>{username.charAt(0).toUpperCase()}</AvatarFallback>
@@ -132,7 +186,7 @@ export function Tweet({
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center flex-wrap gap-1">
-              <span className="font-bold text-sm md:text-base">{username}</span>
+              <span className="font-bold text-sm md:text-base user-profile-link cursor-pointer hover:underline" onClick={handleUserClick}>{username}</span>
               {isVerified && (
                 <Badge className="px-1 py-0 bg-blue-500 text-white rounded-full text-xs">
                   ✓
@@ -184,6 +238,7 @@ export function Tweet({
         tweetHandle={handle}
         tweetContent={content}
         tweetIsVerified={isVerified}
+        tweetAvatar={avatar}
         onAddComment={handleAddComment}
         comments={commentsList}
       />

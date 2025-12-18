@@ -2,21 +2,78 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import { Button } from "../ui/button"
 import { Search } from "lucide-react"
 import { Input } from "../ui/input"
+import { useNavigate } from "react-router-dom"
+import { useState, useEffect } from "react"
+import { murmurAPI } from "../../lib/murmur-api"
+import { profileAPI } from "../../lib/profile-api"
+import { useAppSelector } from "../../store/hooks"
 
 export function TrendingSection() {
-  const trends = [
-    { category: "Sports", title: "#WorldCup", tweets: "50.4K" },
-    { category: "Technology", title: "React", tweets: "32.1K" },
-    { category: "Entertainment", title: "NewMovie", tweets: "18.2K" },
-    { category: "Politics", title: "Elections", tweets: "12.5K" },
-    { category: "Trending", title: "ShadCN", tweets: "8.9K" },
-  ]
+  const navigate = useNavigate()
+  const user = useAppSelector((state) => state.auth.user)
+  const [suggestedUsers, setSuggestedUsers] = useState<Array<{id: string, name: string, username: string, followersCount?: number}>>([])
+  const [loading, setLoading] = useState(true)
 
-  const whoToFollow = [
-    { name: "John Doe", handle: "@johndoe", followers: "1.2M" },
-    { name: "Jane Smith", handle: "@janesmith", followers: "850K" },
-    { name: "Tech News", handle: "@technews", followers: "2.1M" },
-  ]
+  useEffect(() => {
+    loadSuggestedUsers()
+  }, [])
+
+  const handleFollow = async (userId: string) => {
+    try {
+      await profileAPI.toggleFollow(userId);
+      // Remove the followed user from the suggestions list
+      setSuggestedUsers(prev => prev.filter(user => user.id !== userId));
+    } catch (error) {
+      console.error('Error following user:', error);
+    }
+  }
+
+  const loadSuggestedUsers = async () => {
+    try {
+      // Get timeline to extract popular users
+      const timeline = await murmurAPI.getTimeline(20)
+      
+      // Extract unique users from timeline
+      const userMap = new Map()
+      const userIdsToCheck: string[] = []
+      
+      timeline.data.forEach(murmur => {
+        if (!userMap.has(murmur.user.id) && murmur.user.id !== user?.id) {
+          userMap.set(murmur.user.id, {
+            id: murmur.user.id,
+            name: murmur.user.name,
+            username: murmur.user.username,
+            followersCount: 0 // We don't have followers count from murmur data
+          });
+          userIdsToCheck.push(murmur.user.id);
+        }
+      })
+      
+      // Check follow status for each user
+      const followStatusPromises = userIdsToCheck.map(userId => 
+        profileAPI.getFollowStatus(userId).catch(() => ({ isFollowing: false }))
+      );
+      
+      const followStatusResults = await Promise.all(followStatusPromises);
+      
+      // Filter out users that are already being followed
+      const usersArray = Array.from(userMap.values()).filter((_, index) => {
+        return !followStatusResults[index]?.isFollowing;
+      }).slice(0, 3);
+      
+      setSuggestedUsers(usersArray);
+    } catch (error) {
+      console.error('Error loading suggested users:', error)
+      // Fallback to dummy data if API fails
+      setSuggestedUsers([
+        { id: "1", name: "John Doe", username: "@johndoe", followersCount: 1200000 },
+        { id: "2", name: "Jane Smith", username: "@janesmith", followersCount: 850000 },
+        { id: "3", name: "Tech News", username: "@technews", followersCount: 2100000 }
+      ])
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -29,46 +86,46 @@ export function TrendingSection() {
         />
       </div>
 
-      {/* Trends */}
-      <Card className="border-none shadow-none">
-        <CardHeader>
-          <CardTitle>Trends for you</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {trends.map((trend, index) => (
-            <div 
-              key={index} 
-              className="p-4 hover:bg-gray-100 dark:hover:bg-gray-900 cursor-pointer transition-colors"
-            >
-              <p className="text-gray-500 text-sm">{trend.category} · Trending</p>
-              <p className="font-bold">{trend.title}</p>
-              <p className="text-gray-500 text-sm">{trend.tweets} posts</p>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+     
 
-      {/* Who to follow */}
+      {/* Suggested for you */}
       <Card className="border-none shadow-none">
         <CardHeader>
-          <CardTitle>Who to follow</CardTitle>
+          <CardTitle>Suggested for you</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          {whoToFollow.map((user, index) => (
-            <div 
-              key={index} 
-              className="flex items-center p-4 hover:bg-gray-100 dark:hover:bg-gray-900 cursor-pointer transition-colors"
-            >
-              <div className="flex-1">
-                <p className="font-bold">{user.name}</p>
-                <p className="text-gray-500">{user.handle}</p>
-                <p className="text-gray-500 text-sm">{user.followers} followers</p>
+          {loading ? (
+            <div className="p-4 text-center text-gray-500">Loading suggestions...</div>
+          ) : suggestedUsers.length > 0 ? (
+            suggestedUsers.map((user) => (
+              <div 
+                key={user.id} 
+                className="flex items-center p-4 hover:bg-gray-100 dark:hover:bg-gray-900 cursor-pointer transition-colors"
+                onClick={() => navigate(`/profile/${user.id}`)}>
+                <div className="flex-1">
+                  <p className="font-bold">{user.name}</p>
+                  <p className="text-gray-500">{user.username}</p>
+                  {user.followersCount !== undefined && (
+                    <p className="text-gray-500 text-sm">
+                      {user.followersCount >= 1000000 
+                        ? `${(user.followersCount / 1000000).toFixed(1)}M` 
+                        : user.followersCount >= 1000 
+                          ? `${(user.followersCount / 1000).toFixed(1)}K` 
+                          : user.followersCount} followers
+                    </p>
+                  )}
+                </div>
+                <Button variant="outline" size="sm" onClick={(e) => {
+                  e.stopPropagation();
+                  handleFollow(user.id);
+                }}>
+                  Follow
+                </Button>
               </div>
-              <Button variant="outline" size="sm">
-                Follow
-              </Button>
-            </div>
-          ))}
+            ))
+          ) : (
+            <div className="p-4 text-center text-gray-500">No suggestions available</div>
+          )}
         </CardContent>
       </Card>
 
@@ -83,7 +140,7 @@ export function TrendingSection() {
           <span className="hover:underline cursor-pointer">More</span>
         </div>
         <div className="mt-2">
-          © 2024 Twitter Clone
+          © {new Date().getFullYear()} Twitter Clone
         </div>
       </div>
     </div>
