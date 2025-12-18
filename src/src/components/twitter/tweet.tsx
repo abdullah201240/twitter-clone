@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import { Button } from "../ui/button"
@@ -63,7 +63,7 @@ export function Tweet({
   onLikeChange?: (liked: boolean) => void
 }) {
   const navigate = useNavigate()
-  const handleTweetClick = (e: React.MouseEvent) => {
+  const handleTweetClick = useCallback((e: React.MouseEvent) => {
     // Don't navigate to post detail if clicking on user name/avatar
     if (e.target instanceof Element && e.target.closest('.user-profile-link')) {
       return;
@@ -72,16 +72,16 @@ export function Tweet({
     if (id) {
       navigate(`/post/${id}`, { state: { murmur } });
     }
-  }
+  }, [id, murmur, navigate])
   
-  const handleUserClick = (e: React.MouseEvent) => {
+  const handleUserClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (murmur?.userId) {
       navigate(`/profile/${murmur.userId}`);
     } else if (murmur?.user?.id) {
       navigate(`/profile/${murmur.user.id}`);
     }
-  }
+  }, [murmur?.userId, murmur?.user?.id, navigate])
   const user = useAppSelector((state) => state.auth.user)
   const [localIsLiked, setLocalIsLiked] = useState(false)
   const [likeCount, setLikeCount] = useState(likes)
@@ -105,7 +105,7 @@ export function Tweet({
     }
   }, [isCommentDialogOpen, id])
 
-  const loadLikeStatus = async () => {
+  const loadLikeStatus = useCallback(async () => {
     if (!id || !user) return
     try {
       const status = await murmurAPI.getLikeStatus(id)
@@ -113,9 +113,9 @@ export function Tweet({
     } catch (error) {
       console.error('Error loading like status:', error)
     }
-  }
+  }, [id, user])
 
-  const loadComments = async () => {
+  const loadComments = useCallback(async () => {
     if (!id) return
     try {
       const commentData = await murmurAPI.getComments(id)
@@ -133,9 +133,9 @@ export function Tweet({
     } catch (error) {
       console.error('Error loading comments:', error)
     }
-  }
+  }, [id])
 
-  const handleLike = async (e: React.MouseEvent) => {
+  const handleLike = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation()
     if (!id || !user) return
 
@@ -153,15 +153,15 @@ export function Tweet({
     } catch (error) {
       console.error('Error toggling like:', error)
     }
-  }
+  }, [id, user, externalIsLiked, onLikeChange])
 
 
-  const handleComment = (e: React.MouseEvent) => {
+  const handleComment = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
     setIsCommentDialogOpen(true)
-  }
+  }, [])
 
-  const handleAddComment = async (commentContent: string) => {
+  const handleAddComment = useCallback(async (commentContent: string) => {
     if (!id || !user) return
 
     try {
@@ -180,15 +180,15 @@ export function Tweet({
     } catch (error) {
       console.error('Error creating comment:', error)
     }
-  }
+  }, [id, user])
 
-  const formatNumber = (num: number) => {
+  const formatNumber = useCallback((num: number) => {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
     if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
     return num
-  }
+  }, [])
 
-  const formatTime = (dateString: string) => {
+  const formatTime = useCallback((dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
@@ -197,9 +197,9 @@ export function Tweet({
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m`
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h`
     return `${Math.floor(diffInSeconds / 86400)}d`
-  }
+  }, [])
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     if (!id || !user) return;
     
     try {
@@ -213,7 +213,7 @@ export function Tweet({
       console.error('Error deleting murmur:', error);
       toast.error("Failed to delete post");
     }
-  };
+  }, [id, user, onDelete]);
 
   const isOwner = user && (murmur?.userId === user.id || murmur?.user?.id === user.id);
 

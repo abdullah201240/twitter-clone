@@ -3,7 +3,7 @@ import { Button } from "../ui/button"
 import { Search } from "lucide-react"
 import { Input } from "../ui/input"
 import { useNavigate } from "react-router-dom"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { murmurAPI } from "../../lib/murmur-api"
 import { profileAPI } from "../../lib/profile-api"
 import { useAppSelector } from "../../store/hooks"
@@ -18,7 +18,7 @@ export function TrendingSection() {
     loadSuggestedUsers()
   }, [])
 
-  const handleFollow = async (userId: string) => {
+  const handleFollow = useCallback(async (userId: string) => {
     try {
       await profileAPI.toggleFollow(userId);
       // Remove the followed user from the suggestions list
@@ -26,9 +26,9 @@ export function TrendingSection() {
     } catch (error) {
       console.error('Error following user:', error);
     }
-  }
+  }, [])
 
-  const loadSuggestedUsers = async () => {
+  const loadSuggestedUsers = useCallback(async () => {
     try {
       // Get timeline to extract popular users
       const timeline = await murmurAPI.getTimeline(20)
@@ -73,7 +73,7 @@ export function TrendingSection() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user?.id])
 
   return (
     <div className="space-y-4">

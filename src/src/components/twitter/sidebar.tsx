@@ -4,15 +4,9 @@ import { NavLink, useNavigate } from "react-router-dom"
 import { cn } from "../../lib/utils"
 import {
   Home,
-  Search,
-  Bell,
-  Mail,
-  Bookmark,
-  Users,
   User,
   Ellipsis,
   Feather,
-  MoreHorizontal
 } from "lucide-react"
 
 import { useAppSelector, useAppDispatch } from "../../store/hooks"
@@ -28,7 +22,7 @@ import { LogOut } from "lucide-react"
 import { useState } from "react"
 import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog"
 import { TweetCompose } from "./tweet-compose"
-import { murmurAPI, Murmur } from "../../lib/murmur-api"
+import { murmurAPI } from "../../lib/murmur-api"
 
 export function Sidebar() {
   const user = useAppSelector((state) => state.auth.user)
@@ -43,7 +37,7 @@ export function Sidebar() {
 
   const handlePost = async (content: string, image?: string) => {
     try {
-      const newMurmur = await murmurAPI.createMurmur({
+      await murmurAPI.createMurmur({
         content,
         mediaUrl: image
       });

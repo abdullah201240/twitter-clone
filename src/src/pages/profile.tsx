@@ -37,7 +37,7 @@ export function ProfilePage() {
     
     // Memoize derived values
     const isOwnProfile = useMemo(() => 
-        !userId || (currentUser && userId === currentUser.id), 
+        Boolean(!userId || (currentUser && userId === currentUser.id)), 
         [userId, currentUser]
     )
 

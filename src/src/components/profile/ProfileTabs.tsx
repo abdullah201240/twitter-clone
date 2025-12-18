@@ -1,4 +1,3 @@
-import { useState } from "react"
 import { ProfileData, UserWithFollowStatus } from "../../lib/profile-api"
 import { Tweet } from "../../components/twitter/tweet"
 import { UserListItem } from "./UserListItem"

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react"
+import { useState, useRef, useCallback } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import { Button } from "../ui/button"
 import { Textarea } from "../ui/textarea"
@@ -38,7 +38,7 @@ export function TweetCompose({ onPost }: TweetComposeProps) {
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [isPosting, setIsPosting] = useState(false)
 
-  const handlePost = async () => {
+  const handlePost = useCallback(async () => {
     if (!content.trim() && !imageFile) {
       setAlert({ type: 'error', message: 'Please enter some content or select an image' })
       return
@@ -80,13 +80,13 @@ export function TweetCompose({ onPost }: TweetComposeProps) {
     } finally {
       setIsPosting(false)
     }
-  }
+  }, [content, imageFile, uploadedImageUrl, onPost])
 
-  const handleImageClick = () => {
+  const handleImageClick = useCallback(() => {
     fileInputRef.current?.click()
-  }
+  }, [])
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       // Validate file size (5MB max)
@@ -108,20 +108,20 @@ export function TweetCompose({ onPost }: TweetComposeProps) {
       }
       reader.readAsDataURL(file)
     }
-  }
+  }, [])
 
-  const removeImage = () => {
+  const removeImage = useCallback(() => {
     setImagePreview(null)
     setImageFile(null)
     setUploadedImageUrl(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
     }
-  }
+  }, [])
 
-  const onEmojiClick = (emojiData: EmojiClickData) => {
+  const onEmojiClick = useCallback((emojiData: EmojiClickData) => {
     setContent(prev => prev + emojiData.emoji)
-  }
+  }, [])
 
   return (
     <div className="border-b p-4">

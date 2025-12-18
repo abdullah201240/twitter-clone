@@ -1,7 +1,6 @@
-import { ArrowLeft, Calendar, Link as LinkIcon, MapPin, Camera } from "lucide-react"
+import { Calendar, Link as LinkIcon, MapPin, Camera } from "lucide-react"
 import { Button } from "../../components/ui/button"
 import { ProfileData } from "../../lib/profile-api"
-import { useNavigate } from "react-router-dom"
 import { FollowButton } from "../twitter/follow-button"
 
 interface ProfileHeaderProps {
@@ -23,7 +22,6 @@ export function ProfileHeader({
     setIsEditOpen,
     joinedDate
 }: ProfileHeaderProps) {
-    const navigate = useNavigate()
 
     return (
         <>
