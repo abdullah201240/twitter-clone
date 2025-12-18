@@ -9,12 +9,14 @@ import { ProfileHeader } from "../components/profile/ProfileHeader"
 import { ProfileTabs } from "../components/profile/ProfileTabs"
 import { EditProfileModal } from "../components/profile/EditProfileModal"
 import { ProfilePageSkeleton } from "../components/profile/ProfileSkeleton"
+import { Alert, AlertDescription } from "../components/ui/alert"
+import { CheckCircle } from "lucide-react"
 
 export function ProfilePage() {
     const currentUser = useAppSelector((state) => state.auth.user)
     const navigate = useNavigate()
     const { userId } = useParams<{ userId?: string }>()
-    
+
     // Progressive loading states
     const [profile, setProfile] = useState<ProfileData | null>(null)
     const [profileLoading, setProfileLoading] = useState(true)
@@ -34,14 +36,18 @@ export function ProfilePage() {
     })
     const [uploading, setUploading] = useState(false)
     const [likeStatuses, setLikeStatuses] = useState<Record<string, boolean>>({})
-    
+
+    // Alert states
+    const [showAvatarAlert, setShowAvatarAlert] = useState(false)
+    const [showCoverAlert, setShowCoverAlert] = useState(false)
+
     // Memoize derived values
-    const isOwnProfile = useMemo(() => 
-        Boolean(!userId || (currentUser && userId === currentUser.id)), 
+    const isOwnProfile = useMemo(() =>
+        Boolean(!userId || (currentUser && userId === currentUser.id)),
         [userId, currentUser]
     )
 
-    const joinedDate = useMemo(() => 
+    const joinedDate = useMemo(() =>
         profile ? new Date(profile.createdAt).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
@@ -55,14 +61,14 @@ export function ProfilePage() {
     }, [navigate])
 
     const handleFollowChange = useCallback((userId: string, isFollowing: boolean) => {
-        setFollowers(prev => prev.map(user => 
+        setFollowers(prev => prev.map(user =>
             user.id === userId ? { ...user, isFollowed: isFollowing } : user
         ))
-        
-        setFollowing(prev => prev.map(user => 
+
+        setFollowing(prev => prev.map(user =>
             user.id === userId ? { ...user, isFollowed: isFollowing } : user
         ))
-        
+
         if (isOwnProfile && profile) {
             loadProfile()
         }
@@ -70,7 +76,7 @@ export function ProfilePage() {
 
     const loadFollowers = useCallback(async () => {
         if (!profile || !currentUser) return;
-        
+
         setFollowersLoading(true);
         try {
             const followersList = await profileAPI.getFollowers(profile.id);
@@ -88,7 +94,7 @@ export function ProfilePage() {
 
     const loadFollowing = useCallback(async () => {
         if (!profile || !currentUser) return;
-        
+
         setFollowingLoading(true);
         try {
             const followingList = await profileAPI.getFollowing(profile.id);
@@ -106,7 +112,7 @@ export function ProfilePage() {
 
     const handleTabChange = useCallback((tab: 'posts' | 'followers' | 'following') => {
         setActiveTab(tab);
-        
+
         if (tab === 'followers' && followers.length === 0) {
             loadFollowers();
         } else if (tab === 'following' && following.length === 0) {
@@ -118,19 +124,19 @@ export function ProfilePage() {
     const loadProfile = useCallback(async () => {
         try {
             setProfileLoading(true)
-            
+
             if (isOwnProfile && currentUser) {
                 const data = await profileAPI.getProfile(currentUser.id)
                 setProfile(data)
                 setProfileLoading(false) // ✅ Show profile immediately
-                
+
                 setEditData({
                     name: data.name,
                     bio: data.bio || "",
                     location: data.location || "",
                     website: data.website || "",
                 })
-                
+
                 // Load murmurs in background
                 setMurmursLoading(true)
                 try {
@@ -141,12 +147,12 @@ export function ProfilePage() {
                 } finally {
                     setMurmursLoading(false)
                 }
-            } 
+            }
             else if (userId) {
                 const data = await profileAPI.getProfile(userId)
                 setProfile(data)
                 setProfileLoading(false) // ✅ Show profile immediately
-                
+
                 // Load murmurs in background
                 setMurmursLoading(true)
                 try {
@@ -182,13 +188,13 @@ export function ProfilePage() {
     useEffect(() => {
         const fetchLikeStatuses = async () => {
             if (!currentUser || userMurmurs.length === 0) return;
-            
+
             const tweetIds = userMurmurs
                 .filter(tweet => !(tweet.id in likeStatuses))
                 .map(tweet => tweet.id);
-                
+
             if (tweetIds.length === 0) return;
-            
+
             try {
                 const statuses = await murmurAPI.getMultipleLikeStatus(tweetIds);
                 setLikeStatuses(prev => ({ ...prev, ...statuses }));
@@ -196,7 +202,7 @@ export function ProfilePage() {
                 console.error('Error fetching like statuses:', error);
             }
         };
-        
+
         fetchLikeStatuses();
     }, [userMurmurs, currentUser]);
 
@@ -208,6 +214,9 @@ export function ProfilePage() {
             setUploading(true)
             const updated = await profileAPI.uploadAvatar(file)
             setProfile(updated)
+            setShowAvatarAlert(true)
+            // Auto-hide alert after 3 seconds
+            setTimeout(() => setShowAvatarAlert(false), 3000)
         } catch (error) {
             console.error('Error uploading avatar:', error)
         } finally {
@@ -223,6 +232,9 @@ export function ProfilePage() {
             setUploading(true)
             const updated = await profileAPI.uploadCoverImage(file)
             setProfile(updated)
+            setShowCoverAlert(true)
+            // Auto-hide alert after 3 seconds
+            setTimeout(() => setShowCoverAlert(false), 3000)
         } catch (error) {
             console.error('Error uploading cover:', error)
         } finally {
@@ -255,23 +267,42 @@ export function ProfilePage() {
     if (profileLoading) {
         return <ProfilePageSkeleton />;
     }
-    
+
     if (!profile && isOwnProfile && !currentUser) {
         return <div className="p-4 text-center">Please log in to view your profile.</div>;
     }
-    
+
     if (!profile && !isOwnProfile) {
         return <div className="p-4 text-center">Profile not found.</div>;
     }
-    
+
     if (!profile) {
         return <div className="p-4 text-center">Profile not available.</div>;
     }
 
     return (
         <div>
+            {/* Success Alerts */}
+            {showAvatarAlert && (
+                <div className="fixed top-4 right-4 z-50">
+                    <Alert variant="success" className="shadow-lg">
+                        <CheckCircle className="h-4 w-4" />
+                        <AlertDescription>Profile picture updated successfully!</AlertDescription>
+                    </Alert>
+                </div>
+            )}
+
+            {showCoverAlert && (
+                <div className="fixed top-4 right-4 z-50">
+                    <Alert variant="success" className="shadow-lg">
+                        <CheckCircle className="h-4 w-4" />
+                        <AlertDescription>Cover photo updated successfully!</AlertDescription>
+                    </Alert>
+                </div>
+            )}
+
             {/* Header - Always visible */}
-            <div className="sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-md z-10 
+            <div className="sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-md z-10
              p-2 flex items-center gap-6">
                 <Button variant="ghost" size="icon" className="rounded-full" onClick={() => navigate(-1)}>
                     <ArrowLeft className="h-5 w-5" />
@@ -282,7 +313,7 @@ export function ProfilePage() {
                 </div>
             </div>
 
-            <ProfileHeader 
+            <ProfileHeader
                 profile={profile}
                 isOwnProfile={isOwnProfile}
                 uploading={uploading}
@@ -292,7 +323,7 @@ export function ProfilePage() {
                 joinedDate={joinedDate}
             />
 
-            <ProfileTabs 
+            <ProfileTabs
                 activeTab={activeTab}
                 handleTabChange={handleTabChange}
                 profile={profile}
@@ -309,7 +340,7 @@ export function ProfilePage() {
                 handleFollowChange={handleFollowChange}
             />
 
-            <EditProfileModal 
+            <EditProfileModal
                 isEditOpen={isEditOpen}
                 setIsEditOpen={setIsEditOpen}
                 editData={editData}

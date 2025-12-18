@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
@@ -51,6 +51,17 @@ export class ProfileService {
   async updateProfile(userId: string, updateData: UpdateProfileDto): Promise<ProfileResponseDto> {
     this.logger.log(`Updating profile for user: ${userId}`);
     
+    // First verify that user exists
+    const existingUser = await this.userRepository.findOne({
+      where: { id: userId },
+      select: ['id']
+    });
+    
+    if (!existingUser) {
+      this.logger.warn(`Profile update failed: User not found for ID ${userId}`);
+      throw new NotFoundException('User not found');
+    }
+    
     // Update user profile using query builder for better performance
     const updateResult = await this.userRepository
       .createQueryBuilder()
@@ -99,20 +110,20 @@ export class ProfileService {
       throw new BadRequestException('No file uploaded');
     }
 
-    // Get current avatar URL before updating
-    const currentUser = await this.userRepository.findOne({
+    // First verify that user exists
+    const existingUser = await this.userRepository.findOne({
       where: { id: userId },
-      select: ['avatar']
+      select: ['id', 'avatar']
     });
-
-    if (!currentUser) {
+    
+    if (!existingUser) {
       this.logger.warn(`Avatar upload failed: User not found for ID ${userId}`);
       throw new NotFoundException('User not found');
     }
 
     // Delete old avatar if exists
-    if (currentUser.avatar) {
-      const oldFilename = this.uploadService.extractFilenameFromUrl(currentUser.avatar);
+    if (existingUser.avatar) {
+      const oldFilename = this.uploadService.extractFilenameFromUrl(existingUser.avatar);
       if (oldFilename) {
         this.uploadService.deleteFile(oldFilename);
       }
@@ -157,20 +168,20 @@ export class ProfileService {
       throw new BadRequestException('No file uploaded');
     }
 
-    // Get current cover image URL before updating
-    const currentUser = await this.userRepository.findOne({
+    // First verify that user exists
+    const existingUser = await this.userRepository.findOne({
       where: { id: userId },
-      select: ['coverImage']
+      select: ['id', 'coverImage']
     });
-
-    if (!currentUser) {
+    
+    if (!existingUser) {
       this.logger.warn(`Cover image upload failed: User not found for ID ${userId}`);
       throw new NotFoundException('User not found');
     }
 
     // Delete old cover image if exists
-    if (currentUser.coverImage) {
-      const oldFilename = this.uploadService.extractFilenameFromUrl(currentUser.coverImage);
+    if (existingUser.coverImage) {
+      const oldFilename = this.uploadService.extractFilenameFromUrl(existingUser.coverImage);
       if (oldFilename) {
         this.uploadService.deleteFile(oldFilename);
       }

@@ -1,4 +1,3 @@
-import { DataSource } from 'typeorm';
 import { User } from '../entities/user.entity';
 import { Murmur } from '../entities/murmur.entity';
 import { createDataSource } from '../data-source';

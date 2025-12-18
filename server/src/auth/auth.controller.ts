@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Req, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Req, HttpCode, HttpStatus, Logger, UnauthorizedException } from '@nestjs/common';
 import { Request } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -8,6 +8,8 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('api/auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
@@ -33,6 +35,15 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async logout(@Req() request: Request) {
     const user = request.user as any;
+    
+    // Log the user info for debugging
+    this.logger.log(`Logout request from user ID: ${user?.userId}`);
+    
+    if (!user || !user.userId) {
+      this.logger.warn('Logout failed: No authenticated user found');
+      throw new UnauthorizedException('Authentication required');
+    }
+    
     await this.authService.logout(user.userId);
     return { message: 'Logged out successfully' };
   }
