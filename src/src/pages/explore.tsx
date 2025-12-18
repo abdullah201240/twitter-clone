@@ -12,12 +12,12 @@ export function ExplorePage() {
 
     return (
         <div>
-            <div className="sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-md z-10 p-2 border-b dark:border-gray-800">
+            <div className="sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-md z-10 p-2">
                 <div className="relative">
                     <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Search"
-                        className="pl-9 bg-gray-100 dark:bg-gray-900 border-none rounded-full h-11 focus-visible:ring-sky-500"
+                        className="pl-9 bg-gray-100 dark:bg-gray-900 rounded-full h-11 focus-visible:ring-sky-500"
                     />
                 </div>
             </div>

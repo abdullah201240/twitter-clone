@@ -166,7 +166,8 @@ export function ProfilePage() {
 
     return (
         <div>
-            <div className="sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-md z-10 border-b dark:border-gray-800 p-2 flex items-center gap-6">
+            <div className="sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-md z-10 
+             p-2 flex items-center gap-6">
                 <Button variant="ghost" size="icon" className="rounded-full" onClick={() => navigate(-1)}>
                     <ArrowLeft className="h-5 w-5" />
                 </Button>
@@ -209,7 +210,7 @@ export function ProfilePage() {
                 {/* Avatar */}
                 <div className="absolute -bottom-16 left-4">
                     <div className="relative w-32 h-32 group/avatar">
-                        <div className="w-32 h-32 rounded-full bg-black border-4 border-white dark:border-black p-1 flex items-center justify-center">
+                        <div className="w-32 h-32 rounded-full bg-black p-1 flex items-center justify-center">
                             {profile.avatar ? (
                                 <img 
                                     src={profile.avatar} 
@@ -299,8 +300,8 @@ export function ProfilePage() {
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b dark:border-gray-800 mt-4">
-                <div className="flex-1 p-4 hover:bg-gray-200/50 dark:hover:bg-gray-800/50 cursor-pointer transition text-center font-bold border-b-4 border-sky-500">
+            <div className="flex  mt-4">
+                <div className="flex-1 p-4 hover:bg-gray-200/50 dark:hover:bg-gray-800/50 cursor-pointer transition text-center font-bold">
                     Posts
                 </div>
                 <div className="flex-1 p-4 hover:bg-gray-200/50 dark:hover:bg-gray-800/50 cursor-pointer transition text-center text-gray-500 font-medium">
@@ -363,7 +364,7 @@ export function ProfilePage() {
                                         {murmur.content}
                                     </p>
                                     {murmur.mediaUrl && (
-                                        <div className="mt-2 max-w-lg rounded-2xl overflow-hidden border dark:border-gray-700">
+                                        <div className="mt-2 max-w-lg rounded-2xl overflow-hidden ">
                                             <img 
                                                 src={murmur.mediaUrl} 
                                                 alt="Attachment" 

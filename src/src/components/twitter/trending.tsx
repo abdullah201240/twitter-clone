@@ -30,7 +30,7 @@ export function TrendingSection() {
       </div>
 
       {/* Trends */}
-      <Card>
+      <Card className="border-none shadow-none">
         <CardHeader>
           <CardTitle>Trends for you</CardTitle>
         </CardHeader>
@@ -49,7 +49,7 @@ export function TrendingSection() {
       </Card>
 
       {/* Who to follow */}
-      <Card>
+      <Card className="border-none shadow-none">
         <CardHeader>
           <CardTitle>Who to follow</CardTitle>
         </CardHeader>

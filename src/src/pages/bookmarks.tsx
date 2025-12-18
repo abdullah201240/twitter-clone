@@ -3,7 +3,7 @@ import { Tweet } from "../components/twitter/tweet"
 export function BookmarksPage() {
     return (
         <div>
-            <div className="sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-md z-10 border-b dark:border-gray-800 p-4">
+            <div className="sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-md z-10 p-4">
                 <h1 className="font-bold text-xl">Bookmarks</h1>
                 <p className="text-gray-500 text-sm">@username</p>
             </div>

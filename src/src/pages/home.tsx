@@ -23,7 +23,7 @@ export function HomePage() {
 
     return (
         <>
-            <div className="sticky top-0 md:top-0 bg-white/80 dark:bg-black/80 backdrop-blur-md z-10 border-b dark:border-gray-800">
+            <div className="sticky top-0 md:top-0 bg-white/80 dark:bg-black/80 backdrop-blur-md z-10">
                 <div className="flex">
                     <div
                         onClick={() => setActiveTab('for-you')}

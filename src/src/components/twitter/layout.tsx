@@ -15,12 +15,12 @@ export function TwitterLayout() {
         {/* Main Content */}
         <main className="flex-1 flex max-w-5xl w-full">
           {/* Feed/Outlet area */}
-          <div className="flex-1 md:border-x dark:border-gray-800 min-h-screen w-full max-w-2xl pb-16 md:pb-0">
+          <div className="flex-1  min-h-screen w-full max-w-2xl pb-16 md:pb-0">
             <Outlet />
           </div>
 
           {/* Right sidebar - Hidden on mobile and tablet */}
-          <div className="hidden xl:block w-96 p-4 border-l-0">
+          <div className="hidden xl:block w-96 p-2">
             <div className="sticky top-4">
               <TrendingSection />
             </div>

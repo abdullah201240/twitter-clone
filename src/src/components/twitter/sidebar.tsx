@@ -25,20 +25,39 @@ import {
 } from "../ui/dropdown-menu"
 import { LogOut } from "lucide-react"
 
+import { useState } from "react"
+import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog"
+import { TweetCompose } from "./tweet-compose"
+import { murmurAPI, Murmur } from "../../lib/murmur-api"
+
 export function Sidebar() {
   const user = useAppSelector((state) => state.auth.user)
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
+  const [isPostDialogOpen, setIsPostDialogOpen] = useState(false)
 
   const handleLogout = async () => {
     await dispatch(logoutAction())
     navigate('/login')
   }
 
+  const handlePost = async (content: string, image?: string) => {
+    try {
+      const newMurmur = await murmurAPI.createMurmur({
+        content,
+        mediaUrl: image
+      });
+      // Close the dialog after successful post
+      setIsPostDialogOpen(false);
+    } catch (error) {
+      console.error('Error creating murmur:', error);
+    }
+  };
+
   if (!user) return null
 
   return (
-    <div className="hidden md:flex sticky top-0 h-screen md:w-20 lg:w-64 p-2 lg:p-4 flex-col border-r dark:border-gray-800">
+    <div className="hidden md:flex sticky top-0 h-screen md:w-20 lg:w-64 p-2 lg:p-4 flex-col">
       {/* Logo */}
       <div className="mb-4 flex items-center justify-center lg:justify-start">
         <div className="p-3 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-full transition-colors">
@@ -86,10 +105,17 @@ export function Sidebar() {
       </nav>
 
       {/* Post Button - Icon on tablet, full on desktop */}
-      <Button className="w-full py-3 lg:py-6 text-lg mb-4 justify-center">
-        <Feather className="h-6 w-6 lg:mr-2" />
-        <span className="hidden lg:inline">Post</span>
-      </Button>
+      <Dialog open={isPostDialogOpen} onOpenChange={setIsPostDialogOpen}>
+        <DialogTrigger asChild>
+          <Button className="w-full py-3 lg:py-6 text-lg mb-4 justify-center">
+            <Feather className="h-6 w-6 lg:mr-2" />
+            <span className="hidden lg:inline">Post</span>
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="p-0 max-w-xl">
+          <TweetCompose onPost={handlePost} />
+        </DialogContent>
+      </Dialog>
 
       {/* User Profile */}
       <div className="mt-auto">

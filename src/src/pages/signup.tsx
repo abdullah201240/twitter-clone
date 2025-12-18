@@ -74,7 +74,7 @@ export function SignupPage() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-white dark:bg-black">
             {/* Main container with overlay-like look */}
-            <div className="w-full max-w-[600px] h-full md:h-auto p-4 md:p-8 rounded-2xl bg-white dark:bg-black md:shadow-xl md:border dark:border-gray-800 relative flex flex-col">
+            <div className="w-full max-w-[600px] h-full md:h-auto p-4 md:p-8 rounded-2xl bg-white dark:bg-black md:shadow-xl relative flex flex-col">
                 <div className="flex justify-center mb-8">
                     <svg viewBox="0 0 24 24" aria-hidden="true" className="h-10 w-10 fill-black dark:fill-white"><g><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></g></svg>
                 </div>
@@ -83,7 +83,7 @@ export function SignupPage() {
                     <h1 className="text-3xl font-bold mb-8">Create your account</h1>
 
                     {error && (
-                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4 mb-6">
+                        <div className="bg-red-50 dark:bg-red-900/20 rounded-md p-4 mb-6">
                             <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
                         </div>
                     )}
@@ -98,7 +98,7 @@ export function SignupPage() {
                                         setName(e.target.value)
                                         if (validationErrors.name) setValidationErrors({ ...validationErrors, name: "" })
                                     }}
-                                    className="h-14 text-lg border-gray-300 dark:border-gray-700 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-md"
+                                    className="h-14 text-lg focus:ring-1 focus:ring-sky-500 rounded-md"
                                     disabled={loading}
                                 />
                                 {validationErrors.name && (
@@ -114,7 +114,7 @@ export function SignupPage() {
                                         setEmail(e.target.value)
                                         if (validationErrors.email) setValidationErrors({ ...validationErrors, email: "" })
                                     }}
-                                    className="h-14 text-lg border-gray-300 dark:border-gray-700 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-md"
+                                    className="h-14 text-lg  focus:ring-1 focus:ring-sky-500 rounded-md"
                                     disabled={loading}
                                 />
                                 {validationErrors.email && (
@@ -129,7 +129,7 @@ export function SignupPage() {
                                         setUsername(e.target.value)
                                         if (validationErrors.username) setValidationErrors({ ...validationErrors, username: "" })
                                     }}
-                                    className="h-14 text-lg border-gray-300 dark:border-gray-700 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-md"
+                                    className="h-14 text-lg focus:ring-1 focus:ring-sky-500 rounded-md"
                                     disabled={loading}
                                 />
                                 {validationErrors.username && (
@@ -145,7 +145,7 @@ export function SignupPage() {
                                         setPassword(e.target.value)
                                         if (validationErrors.password) setValidationErrors({ ...validationErrors, password: "" })
                                     }}
-                                    className="h-14 text-lg border-gray-300 dark:border-gray-700 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-md"
+                                    className="h-14 text-lg focus:ring-1 focus:ring-sky-500 rounded-md"
                                     disabled={loading}
                                 />
                                 {validationErrors.password && (

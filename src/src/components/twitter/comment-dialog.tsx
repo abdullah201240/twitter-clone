@@ -68,7 +68,7 @@ export function CommentDialog({
                 </DialogHeader>
 
                 {/* Original Tweet */}
-                <div className="flex gap-3 pb-4 border-b">
+                <div className="flex gap-3 pb-4">
                     <div className="flex flex-col items-center">
                         <Avatar className="h-10 w-10">
                             <AvatarImage src="https://github.com/shadcn.png" />
@@ -128,10 +128,10 @@ export function CommentDialog({
 
                 {/* Comments List */}
                 {comments.length > 0 && (
-                    <div className="border-t pt-4 mt-4">
+                    <div className="pt-4 mt-4">
                         <h3 className="font-bold mb-4">Replies</h3>
                         {comments.map((comment) => (
-                            <div key={comment.id} className="flex gap-3 mb-4 pb-4 border-b last:border-b-0">
+                            <div key={comment.id} className="flex gap-3 mb-4 pb-4">
                                 <Avatar className="h-10 w-10">
                                     <AvatarImage src="https://github.com/shadcn.png" />
                                     <AvatarFallback>{comment.username[0]}</AvatarFallback>

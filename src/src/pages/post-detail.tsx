@@ -108,9 +108,9 @@ export function PostDetailPage() {
   })
 
   return (
-    <div className="min-h-screen border-l border-r dark:border-gray-700">
+    <div className="min-h-screen">
       {/* Header */}
-      <div className="sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-md z-10 border-b dark:border-gray-700 p-4 flex items-center gap-4">
+      <div className="sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-md z-10 p-4 flex items-center gap-4">
         <Button variant="ghost" size="icon" className="rounded-full" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
@@ -118,7 +118,7 @@ export function PostDetailPage() {
       </div>
 
       {/* Post Content */}
-      <div className="border-b dark:border-gray-700 p-4">
+      <div className="p-4">
         {/* Author Info */}
         <div className="flex gap-4 mb-4">
           <Avatar className="h-12 w-12">
@@ -141,7 +141,7 @@ export function PostDetailPage() {
 
         {/* Post Image */}
         {murmur.mediaUrl && (
-          <div className="mt-4 mb-4 rounded-2xl overflow-hidden border dark:border-gray-700">
+          <div className="mt-4 mb-4 rounded-2xl overflow-hidden">
             <img 
               src={murmur.mediaUrl} 
               alt="Post attachment" 
@@ -155,12 +155,12 @@ export function PostDetailPage() {
         )}
 
         {/* Date */}
-        <div className="text-gray-500 text-sm mb-4 border-b dark:border-gray-700 pb-4">
+        <div className="text-gray-500 text-sm mb-4 pb-4">
           {formattedDate}
         </div>
 
         {/* Stats */}
-        <div className="flex gap-8 text-gray-500 mb-4 border-b dark:border-gray-700 pb-4">
+        <div className="flex gap-8 text-gray-500 mb-4  pb-4">
           <div>
             <span className="font-bold text-gray-900 dark:text-white">{formatNumber(commentCount)}</span>
             <span className="ml-2">Comments</span>
@@ -195,7 +195,7 @@ export function PostDetailPage() {
       </div>
 
       {/* Comments Section */}
-      <div className="border-b dark:border-gray-700 p-4">
+      <div className="p-4">
         <h2 className="font-bold text-xl mb-4">Comments</h2>
         {isLoadingComments ? (
           <div className="flex justify-center items-center py-8">
@@ -204,7 +204,7 @@ export function PostDetailPage() {
         ) : commentsList.length > 0 ? (
           <div className="space-y-4">
             {commentsList.map((comment) => (
-              <div key={comment.id} className="flex gap-4 pb-4 border-b dark:border-gray-700 last:border-b-0">
+              <div key={comment.id} className="flex gap-4 pb-4">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={comment.user.avatar || undefined} alt={comment.user.name} />
                   <AvatarFallback>{comment.user.name.charAt(0).toUpperCase()}</AvatarFallback>
