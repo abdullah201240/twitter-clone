@@ -6,13 +6,13 @@ export class AddUserCreatedAtIndex1703000000012 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         // Add index on user.createdAt for better query performance
         await queryRunner.createIndex('users', new TableIndex({
-            name: 'IDX_USERS_CREATED_AT',
+            name: 'idx_created_at',
             columnNames: ['createdAt']
         }));
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         // Drop the index
-        await queryRunner.dropIndex('users', 'IDX_USERS_CREATED_AT');
+        await queryRunner.dropIndex('users', 'idx_created_at');
     }
 }

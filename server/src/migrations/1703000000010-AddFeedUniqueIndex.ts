@@ -6,7 +6,7 @@ export class AddFeedUniqueIndex1703000000010 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         // Add unique composite index on feed.userId and feed.murmurId
         await queryRunner.createIndex('feed', new TableIndex({
-            name: 'IDX_FEED_USER_MURMUR_UNIQUE',
+            name: 'unique_user_murmur_feed',
             columnNames: ['userId', 'murmurId'],
             isUnique: true
         }));
@@ -14,6 +14,6 @@ export class AddFeedUniqueIndex1703000000010 implements MigrationInterface {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         // Drop the unique index
-        await queryRunner.dropIndex('feed', 'IDX_FEED_USER_MURMUR_UNIQUE');
+        await queryRunner.dropIndex('feed', 'unique_user_murmur_feed');
     }
 }

@@ -9,6 +9,7 @@ export class CreateUsersTable1703000000000 implements MigrationInterface {
           {
             name: 'id',
             type: 'varchar',
+            length: '36', // Fix: explicit length for UUID
             isPrimary: true,
             isUnique: true,
           },
