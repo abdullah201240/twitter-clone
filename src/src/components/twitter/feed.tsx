@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { Tweet } from "./tweet"
-import { Loader2 } from "lucide-react"
+import { TweetSkeleton, FeedSkeleton } from "./index"
 import { murmurAPI, Murmur, TimelineResponse } from "../../lib/murmur-api"
 import { useAppSelector } from "../../store/hooks"
 
@@ -116,34 +116,44 @@ export function TwitterFeed({ type, newPost }: TwitterFeedProps) {
 
     return (
         <div>
-            {tweets.map((murmur) => (
-                <Tweet
-                    key={murmur.id}
-                    id={murmur.id}
-                    username={murmur.user.name}
-                    handle={`@${murmur.user.username}`}
-                    avatar={murmur.user.avatar}
-                    timestamp={new Date(murmur.createdAt).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric'
-                    })}
-                    content={murmur.content}
-                    image={murmur.mediaUrl || undefined}
-                    comments={murmur.replyCount}
-                    likes={murmur.likeCount}
-                    views={0}
-                    isVerified={false}
-                    murmur={murmur}
-                    onDelete={() => handleDelete(murmur.id)}
-                    isLiked={likeStatuses[murmur.id] ?? false}
-                    onLikeChange={(liked) => setLikeStatuses(prev => ({ ...prev, [murmur.id]: liked }))}
-                />
-            ))}
-
-            {/* Loading indicator / Observer target */}
-            <div ref={observerTarget} className="p-4 flex justify-center items-center h-20 w-full">
-                {isLoading && <Loader2 className="animate-spin text-sky-500 h-8 w-8" />}
-            </div>
+            {isLoading && tweets.length === 0 ? (
+                // Show feed skeleton only on initial load
+                <FeedSkeleton />
+            ) : (
+                <>
+                    {tweets.map((murmur) => (
+                        <Tweet
+                            key={murmur.id}
+                            id={murmur.id}
+                            username={murmur.user.name}
+                            handle={`@${murmur.user.username}`}
+                            avatar={murmur.user.avatar}
+                            timestamp={new Date(murmur.createdAt).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric'
+                            })}
+                            content={murmur.content}
+                            image={murmur.mediaUrl || undefined}
+                            comments={murmur.replyCount}
+                            likes={murmur.likeCount}
+                            views={0}
+                            isVerified={false}
+                            murmur={murmur}
+                            onDelete={() => handleDelete(murmur.id)}
+                            isLiked={likeStatuses[murmur.id] ?? false}
+                            onLikeChange={(liked) => setLikeStatuses(prev => ({ ...prev, [murmur.id]: liked }))}
+                        />
+                    ))}
+                    {/* Show additional skeletons during infinite scroll loading */}
+                    {isLoading && tweets.length > 0 && (
+                        <div className="divide-y dark:divide-gray-800">
+                            {Array.from({ length: 3 }).map((_, index) => (
+                                <TweetSkeleton key={`loading-${index}`} />
+                            ))}
+                        </div>
+                    )}
+                </>
+            )}
         </div>
     )
 }
