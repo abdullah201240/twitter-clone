@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useParams, useLocation, useNavigate } from "react-router-dom"
 import { ArrowLeft, Heart, MessageCircle, Loader2 } from "lucide-react"
 import { Button } from "../components/ui/button"
@@ -32,7 +32,7 @@ export function PostDetailPage() {
     }
   }, [postId, user])
 
-  const loadLikeStatus = async () => {
+  const loadLikeStatus = useCallback(async () => {
     if (!postId || !user) return
     try {
       const status = await murmurAPI.getLikeStatus(postId)
@@ -40,9 +40,9 @@ export function PostDetailPage() {
     } catch (error) {
       console.error('Error loading like status:', error)
     }
-  }
+  }, [postId, user])
 
-  const loadComments = async () => {
+  const loadComments = useCallback(async () => {
     if (!postId) return
     setIsLoadingComments(true)
     try {
@@ -53,7 +53,7 @@ export function PostDetailPage() {
     } finally {
       setIsLoadingComments(false)
     }
-  }
+  }, [postId])
 
   if (!murmur) {
     return (
@@ -64,7 +64,7 @@ export function PostDetailPage() {
     )
   }
 
-  const handleLike = async () => {
+  const handleLike = useCallback(async () => {
     if (!postId || !user) return
 
     try {
@@ -74,13 +74,13 @@ export function PostDetailPage() {
     } catch (error) {
       console.error('Error toggling like:', error)
     }
-  }
+  }, [postId, user])
 
-  const handleComment = () => {
+  const handleComment = useCallback(() => {
     setIsCommentDialogOpen(true)
-  }
+  }, [])
 
-  const handleAddComment = async (commentContent: string) => {
+  const handleAddComment = useCallback(async (commentContent: string) => {
     if (!postId || !user) return
 
     try {
@@ -90,13 +90,13 @@ export function PostDetailPage() {
     } catch (error) {
       console.error('Error creating comment:', error)
     }
-  }
+  }, [postId, user])
 
-  const formatNumber = (num: number) => {
+  const formatNumber = useCallback((num: number) => {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
     if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
     return num
-  }
+  }, [])
 
   const createdDate = new Date(murmur.createdAt)
   const formattedDate = createdDate.toLocaleDateString('en-US', {

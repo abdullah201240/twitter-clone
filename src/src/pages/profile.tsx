@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo, memo } from "react"
 import { Button } from "../components/ui/button"
 import { ArrowLeft, Calendar, Link as LinkIcon, MapPin, Camera } from "lucide-react"
 import { useAppSelector } from "../store/hooks"
@@ -17,15 +17,99 @@ import {
 } from "../components/ui/dialog"
 import { Tweet } from "../components/twitter/tweet"
 
+// Skeleton Components for Progressive Loading
+const ProfileHeaderSkeleton = () => (
+    <div className="animate-pulse">
+        <div className="h-48 bg-gray-300 dark:bg-gray-700" />
+        <div className="px-4 mt-16 space-y-3">
+            <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-48" />
+            <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-32" />
+            <div className="h-16 bg-gray-300 dark:bg-gray-700 rounded" />
+        </div>
+    </div>
+)
+
+const TweetSkeleton = () => (
+    <div className="p-4 animate-pulse">
+        <div className="flex gap-3">
+            <div className="w-12 h-12 rounded-full bg-gray-300 dark:bg-gray-700" />
+            <div className="flex-1 space-y-2">
+                <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-32" />
+                <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-full" />
+                <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4" />
+            </div>
+        </div>
+    </div>
+)
+
+const UserListSkeleton = () => (
+    <div className="p-4 animate-pulse flex items-center gap-3">
+        <div className="w-12 h-12 rounded-full bg-gray-300 dark:bg-gray-700" />
+        <div className="flex-1 space-y-2">
+            <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-32" />
+            <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded w-24" />
+        </div>
+    </div>
+)
+
+// Memoized user list item component
+const UserListItem = memo(({ 
+    user, 
+    onNavigate, 
+    onFollowChange 
+}: { 
+    user: UserWithFollowStatus
+    onNavigate: (userId: string) => void
+    onFollowChange: (userId: string, isFollowing: boolean) => void
+}) => (
+    <div 
+        className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer" 
+        onClick={() => onNavigate(user.id)}
+    >
+        <div className="flex items-center space-x-3">
+            <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
+                {user.avatar ? (
+                    <img 
+                        src={user.avatar} 
+                        alt={user.name} 
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                    />
+                ) : (
+                    <span className="font-bold text-gray-700 dark:text-gray-300">
+                        {user.name.charAt(0).toUpperCase()}
+                    </span>
+                )}
+            </div>
+            <div>
+                <div className="font-bold">{user.name}</div>
+                <div className="text-gray-500 text-sm">@{user.username}</div>
+            </div>
+        </div>
+        <div onClick={(e) => e.stopPropagation()}>
+            <FollowButton 
+                userId={user.id} 
+                initialFollowing={user.isFollowed} 
+                onFollowChange={(isFollowing) => onFollowChange(user.id, isFollowing)} 
+            />
+        </div>
+    </div>
+))
+
+UserListItem.displayName = 'UserListItem'
+
 export function ProfilePage() {
     const currentUser = useAppSelector((state) => state.auth.user)
     const navigate = useNavigate()
     const { userId } = useParams<{ userId?: string }>()
+    
+    // Progressive loading states
     const [profile, setProfile] = useState<ProfileData | null>(null)
+    const [profileLoading, setProfileLoading] = useState(true)
     const [userMurmurs, setUserMurmurs] = useState<Murmur[]>([])
+    const [murmursLoading, setMurmursLoading] = useState(true)
     const [followers, setFollowers] = useState<UserWithFollowStatus[]>([])
     const [following, setFollowing] = useState<UserWithFollowStatus[]>([])
-    const [loading, setLoading] = useState(true)
     const [followersLoading, setFollowersLoading] = useState(false)
     const [followingLoading, setFollowingLoading] = useState(false)
     const [activeTab, setActiveTab] = useState<'posts' | 'followers' | 'following'>('posts')
@@ -39,19 +123,154 @@ export function ProfilePage() {
     const [uploading, setUploading] = useState(false)
     const [likeStatuses, setLikeStatuses] = useState<Record<string, boolean>>({})
     
-    // Determine if we're viewing our own profile
-    const isOwnProfile = !userId || (currentUser && userId === currentUser.id)
+    // Memoize derived values
+    const isOwnProfile = useMemo(() => 
+        !userId || (currentUser && userId === currentUser.id), 
+        [userId, currentUser]
+    )
+
+    const joinedDate = useMemo(() => 
+        profile ? new Date(profile.createdAt).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+        }) : '',
+        [profile]
+    )
+
+    // Memoized callbacks
+    const handleNavigateToProfile = useCallback((userId: string) => {
+        navigate(`/profile/${userId}`)
+    }, [navigate])
+
+    const handleFollowChange = useCallback((userId: string, isFollowing: boolean) => {
+        setFollowers(prev => prev.map(user => 
+            user.id === userId ? { ...user, isFollowed: isFollowing } : user
+        ))
+        
+        setFollowing(prev => prev.map(user => 
+            user.id === userId ? { ...user, isFollowed: isFollowing } : user
+        ))
+        
+        if (isOwnProfile && profile) {
+            loadProfile()
+        }
+    }, [isOwnProfile, profile])
+
+    const loadFollowers = useCallback(async () => {
+        if (!profile || !currentUser) return;
+        
+        setFollowersLoading(true);
+        try {
+            const followersList = await profileAPI.getFollowers(profile.id);
+            const updatedFollowersList = followersList.map(follower => ({
+                ...follower,
+                isFollowed: follower.id !== currentUser.id
+            }));
+            setFollowers(updatedFollowersList);
+        } catch (error) {
+            console.error('Error loading followers:', error);
+        } finally {
+            setFollowersLoading(false);
+        }
+    }, [profile, currentUser])
+
+    const loadFollowing = useCallback(async () => {
+        if (!profile || !currentUser) return;
+        
+        setFollowingLoading(true);
+        try {
+            const followingList = await profileAPI.getFollowing(profile.id);
+            const updatedFollowingList = followingList.map(following => ({
+                ...following,
+                isFollowed: following.id !== currentUser.id
+            }));
+            setFollowing(updatedFollowingList);
+        } catch (error) {
+            console.error('Error loading following:', error);
+        } finally {
+            setFollowingLoading(false);
+        }
+    }, [profile, currentUser])
+
+    const handleTabChange = useCallback((tab: 'posts' | 'followers' | 'following') => {
+        setActiveTab(tab);
+        
+        if (tab === 'followers' && followers.length === 0) {
+            loadFollowers();
+        } else if (tab === 'following' && following.length === 0) {
+            loadFollowing();
+        }
+    }, [followers.length, following.length, loadFollowers, loadFollowing])
+
+    // PROGRESSIVE LOADING: Load profile first, then murmurs separately
+    const loadProfile = useCallback(async () => {
+        try {
+            setProfileLoading(true)
+            
+            if (isOwnProfile && currentUser) {
+                const data = await profileAPI.getProfile(currentUser.id)
+                setProfile(data)
+                setProfileLoading(false) // ✅ Show profile immediately
+                
+                setEditData({
+                    name: data.name,
+                    bio: data.bio || "",
+                    location: data.location || "",
+                    website: data.website || "",
+                })
+                
+                // Load murmurs in background
+                setMurmursLoading(true)
+                try {
+                    const response = await murmurAPI.getUserMurmurs(data.id, 10)
+                    setUserMurmurs(response.data)
+                } catch (error) {
+                    console.error('Error loading user murmurs:', error)
+                } finally {
+                    setMurmursLoading(false)
+                }
+            } 
+            else if (userId) {
+                const data = await profileAPI.getProfile(userId)
+                setProfile(data)
+                setProfileLoading(false) // ✅ Show profile immediately
+                
+                // Load murmurs in background
+                setMurmursLoading(true)
+                try {
+                    const response = await murmurAPI.getUserMurmurs(userId, 10)
+                    setUserMurmurs(response.data)
+                } catch (error) {
+                    console.error('Error loading user murmurs:', error)
+                } finally {
+                    setMurmursLoading(false)
+                }
+            }
+            else if (!currentUser) {
+                if (!userId) {
+                    navigate('/login')
+                }
+                return
+            }
+        } catch (error) {
+            console.error('Error loading profile:', error)
+            if (isOwnProfile && !currentUser) {
+                navigate('/login')
+            }
+            setProfileLoading(false)
+            setMurmursLoading(false)
+        }
+    }, [userId, currentUser, isOwnProfile, navigate])
 
     useEffect(() => {
         loadProfile()
-    }, [userId, currentUser])
+    }, [loadProfile])
 
-    // Fetch like statuses for all tweets in batch
+    // Optimized like status fetching
     useEffect(() => {
         const fetchLikeStatuses = async () => {
             if (!currentUser || userMurmurs.length === 0) return;
             
-            // Get IDs of tweets that don't have like status cached yet
             const tweetIds = userMurmurs
                 .filter(tweet => !(tweet.id in likeStatuses))
                 .map(tweet => tweet.id);
@@ -67,130 +286,7 @@ export function ProfilePage() {
         };
         
         fetchLikeStatuses();
-    }, [userMurmurs, currentUser]);
-
-    const loadFollowers = async () => {
-        if (!profile || !currentUser) return;
-        
-        setFollowersLoading(true);
-        try {
-            const followersList = await profileAPI.getFollowers(profile.id);
-            // Update isFollowed status for each follower
-            const updatedFollowersList = followersList.map(follower => ({
-                ...follower,
-                isFollowed: follower.id !== currentUser.id // Don't show follow button for self
-            }));
-            setFollowers(updatedFollowersList);
-        } catch (error) {
-            console.error('Error loading followers:', error);
-        } finally {
-            setFollowersLoading(false);
-        }
-    }
-
-    const loadFollowing = async () => {
-        if (!profile || !currentUser) return;
-        
-        setFollowingLoading(true);
-        try {
-            const followingList = await profileAPI.getFollowing(profile.id);
-            // Update isFollowed status for each following
-            const updatedFollowingList = followingList.map(following => ({
-                ...following,
-                isFollowed: following.id !== currentUser.id // Don't show follow button for self
-            }));
-            setFollowing(updatedFollowingList);
-        } catch (error) {
-            console.error('Error loading following:', error);
-        } finally {
-            setFollowingLoading(false);
-        }
-    }
-
-    const handleFollowChange = (userId: string, isFollowing: boolean) => {
-        // Update the followers list
-        setFollowers(prev => prev.map(user => 
-            user.id === userId ? { ...user, isFollowed: isFollowing } : user
-        ));
-        
-        // Update the following list
-        setFollowing(prev => prev.map(user => 
-            user.id === userId ? { ...user, isFollowed: isFollowing } : user
-        ));
-        
-        // Refresh profile counts if this is the current user's profile
-        if (isOwnProfile && profile) {
-            loadProfile();
-        }
-    }
-
-    const handleTabChange = (tab: 'posts' | 'followers' | 'following') => {
-        setActiveTab(tab);
-        
-        // Load data when switching to followers or following tabs
-        if (tab === 'followers' && followers.length === 0) {
-            loadFollowers();
-        } else if (tab === 'following' && following.length === 0) {
-            loadFollowing();
-        }
-    }
-
-    const loadProfile = async () => {
-        try {
-            setLoading(true)
-            
-            // If viewing own profile and we have user data, use it
-            if (isOwnProfile && currentUser) {
-                // Fetch fresh profile data
-                const data = await profileAPI.getProfile(currentUser.id)
-                setProfile(data)
-                setEditData({
-                    name: data.name,
-                    bio: data.bio || "",
-                    location: data.location || "",
-                    website: data.website || "",
-                })
-                
-                // Load user's murmurs
-                try {
-                    const response = await murmurAPI.getUserMurmurs(data.id, 10)
-                    setUserMurmurs(response.data)
-                } catch (error) {
-                    console.error('Error loading user murmurs:', error)
-                }
-            } 
-            // If viewing another user's profile
-            else if (userId) {
-                const data = await profileAPI.getProfile(userId)
-                setProfile(data)
-                
-                // Load user's murmurs
-                try {
-                    const response = await murmurAPI.getUserMurmurs(userId, 10)
-                    setUserMurmurs(response.data)
-                } catch (error) {
-                    console.error('Error loading user murmurs:', error)
-                }
-            }
-            // If viewing own profile but not logged in
-            else if (!currentUser) {
-                // Redirect to login only if trying to view own profile without being logged in
-                if (!userId) {
-                    navigate('/login')
-                }
-                return
-            }
-        } catch (error) {
-            console.error('Error loading profile:', error)
-            // Only redirect to login if we're trying to view our own profile and there's a serious auth issue
-            // For now, we'll just show an error message instead of redirecting
-            if (isOwnProfile && !currentUser) {
-                navigate('/login')
-            }
-        } finally {
-            setLoading(false)
-        }
-    }
+    }, [userMurmurs, currentUser, likeStatuses]);
 
     const handleAvatarUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -222,7 +318,7 @@ export function ProfilePage() {
         }
     }, [])
 
-    const handleSaveProfile = async () => {
+    const handleSaveProfile = useCallback(async () => {
         try {
             setUploading(true)
             const updated = await profileAPI.updateProfile(editData)
@@ -233,35 +329,49 @@ export function ProfilePage() {
         } finally {
             setUploading(false)
         }
+    }, [editData])
+
+    const handleMurmurDelete = useCallback((murmurId: string) => {
+        setUserMurmurs(prev => prev.filter(m => m.id !== murmurId))
+    }, [])
+
+    const handleLikeChange = useCallback((murmurId: string, liked: boolean) => {
+        setLikeStatuses(prev => ({ ...prev, [murmurId]: liked }))
+    }, [])
+
+    // Show skeleton while profile is loading
+    if (profileLoading) {
+        return (
+            <div>
+                <div className="sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-md z-10 p-2 flex items-center gap-6">
+                    <Button variant="ghost" size="icon" className="rounded-full" onClick={() => navigate(-1)}>
+                        <ArrowLeft className="h-5 w-5" />
+                    </Button>
+                    <div className="animate-pulse">
+                        <div className="h-5 bg-gray-300 dark:bg-gray-700 rounded w-32 mb-1" />
+                        <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded w-20" />
+                    </div>
+                </div>
+                <ProfileHeaderSkeleton />
+            </div>
+        )
     }
 
-    if (loading) {
-        return <div className="p-4 text-center">Loading profile...</div>
-    }
-
-    // If we're trying to view our own profile but aren't logged in
     if (!profile && isOwnProfile && !currentUser) {
         return <div className="p-4 text-center">Please log in to view your profile.</div>
     }
 
-    // If we're trying to view another user's profile but it wasn't found
     if (!profile && !isOwnProfile) {
         return <div className="p-4 text-center">Profile not found.</div>
     }
 
-    // This case should theoretically never happen due to the above checks,
-    // but we add this for TypeScript to understand profile is not null
     if (!profile) {
         return <div className="p-4 text-center">Profile not available.</div>
     }
 
-    const joinedDate = new Date(profile.createdAt).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-    })
-
     return (
         <div>
+            {/* Header - Always visible */}
             <div className="sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-md z-10 
              p-2 flex items-center gap-6">
                 <Button variant="ghost" size="icon" className="rounded-full" onClick={() => navigate(-1)}>
@@ -273,13 +383,14 @@ export function ProfilePage() {
                 </div>
             </div>
 
-            {/* Cover Image */}
+            {/* Cover & Avatar - Show immediately when profile loads */}
             <div className="relative h-48 bg-gray-200 dark:bg-gray-800 w-full group cursor-pointer">
                 {profile.coverImage ? (
                     <img 
                         src={profile.coverImage} 
                         alt="Cover" 
                         className="w-full h-full object-contain"
+                        loading="eager"
                         onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             target.style.display = 'none';
@@ -303,7 +414,6 @@ export function ProfilePage() {
                     </div>
                 )}
 
-                {/* Avatar */}
                 <div className="absolute -bottom-16 left-4">
                     <div className="relative w-32 h-32 group/avatar">
                         <div className="w-32 h-32 rounded-full bg-black p-1 flex items-center justify-center">
@@ -312,6 +422,7 @@ export function ProfilePage() {
                                     src={profile.avatar} 
                                     alt="Profile" 
                                     className="w-full h-full rounded-full object-contain"
+                                    loading="eager"
                                     onError={(e) => {
                                         const target = e.target as HTMLImageElement;
                                         target.style.display = 'none';
@@ -339,6 +450,7 @@ export function ProfilePage() {
                 </div>
             </div>
 
+            {/* Profile Info - Show immediately */}
             <div className="flex justify-end p-4">
                 {!isOwnProfile && (
                     <FollowButton userId={profile.id} />
@@ -419,10 +531,16 @@ export function ProfilePage() {
                 </div>
             </div>
 
-            {/* Posts Tab */}
+            {/* Posts Tab - Progressive loading */}
             {activeTab === 'posts' && (
                 <div>
-                    {userMurmurs.length > 0 ? (
+                    {murmursLoading ? (
+                        <div>
+                            {[...Array(3)].map((_, i) => (
+                                <TweetSkeleton key={i} />
+                            ))}
+                        </div>
+                    ) : userMurmurs.length > 0 ? (
                         <div className="divide-y dark:divide-gray-800">
                             {userMurmurs.map((murmur) => (
                                 <Tweet
@@ -442,9 +560,9 @@ export function ProfilePage() {
                                     views={0}
                                     isVerified={false}
                                     murmur={murmur}
-                                    onDelete={() => setUserMurmurs(prev => prev.filter(m => m.id !== murmur.id))}
+                                    onDelete={() => handleMurmurDelete(murmur.id)}
                                     isLiked={likeStatuses[murmur.id] ?? false}
-                                    onLikeChange={(liked) => setLikeStatuses(prev => ({ ...prev, [murmur.id]: liked }))}
+                                    onLikeChange={(liked) => handleLikeChange(murmur.id, liked)}
                                 />
                             ))}
                         </div>
@@ -456,34 +574,24 @@ export function ProfilePage() {
                 </div>
             )}
 
-            {/* Followers Tab */}
+            {/* Followers Tab - Progressive loading */}
             {activeTab === 'followers' && (
                 <div>
                     {followersLoading ? (
-                        <div className="p-4 text-center">Loading followers...</div>
+                        <div>
+                            {[...Array(5)].map((_, i) => (
+                                <UserListSkeleton key={i} />
+                            ))}
+                        </div>
                     ) : followers.length > 0 ? (
                         <div className="divide-y dark:divide-gray-800">
                             {followers.map((user) => (
-                                <div key={user.id} className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer" onClick={() => navigate(`/profile/${user.id}`)}>
-                                    <div className="flex items-center space-x-3">
-                                        <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
-                                            {user.avatar ? (
-                                                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <span className="font-bold text-gray-700 dark:text-gray-300">
-                                                    {user.name.charAt(0).toUpperCase()}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div>
-                                            <div className="font-bold">{user.name}</div>
-                                            <div className="text-gray-500 text-sm">@{user.username}</div>
-                                        </div>
-                                    </div>
-                                    <div onClick={(e) => e.stopPropagation()}>
-                                        <FollowButton userId={user.id} initialFollowing={user.isFollowed} onFollowChange={(isFollowing) => handleFollowChange(user.id, isFollowing)} />
-                                    </div>
-                                </div>
+                                <UserListItem
+                                    key={user.id}
+                                    user={user}
+                                    onNavigate={handleNavigateToProfile}
+                                    onFollowChange={handleFollowChange}
+                                />
                             ))}
                         </div>
                     ) : (
@@ -494,34 +602,24 @@ export function ProfilePage() {
                 </div>
             )}
 
-            {/* Following Tab */}
+            {/* Following Tab - Progressive loading */}
             {activeTab === 'following' && (
                 <div>
                     {followingLoading ? (
-                        <div className="p-4 text-center">Loading following...</div>
+                        <div>
+                            {[...Array(5)].map((_, i) => (
+                                <UserListSkeleton key={i} />
+                            ))}
+                        </div>
                     ) : following.length > 0 ? (
                         <div className="divide-y dark:divide-gray-800">
                             {following.map((user) => (
-                                <div key={user.id} className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer" onClick={() => navigate(`/profile/${user.id}`)}>
-                                    <div className="flex items-center space-x-3">
-                                        <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
-                                            {user.avatar ? (
-                                                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <span className="font-bold text-gray-700 dark:text-gray-300">
-                                                    {user.name.charAt(0).toUpperCase()}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div>
-                                            <div className="font-bold">{user.name}</div>
-                                            <div className="text-gray-500 text-sm">@{user.username}</div>
-                                        </div>
-                                    </div>
-                                    <div onClick={(e) => e.stopPropagation()}>
-                                        <FollowButton userId={user.id} initialFollowing={user.isFollowed} onFollowChange={(isFollowing) => handleFollowChange(user.id, isFollowing)} />
-                                    </div>
-                                </div>
+                                <UserListItem
+                                    key={user.id}
+                                    user={user}
+                                    onNavigate={handleNavigateToProfile}
+                                    onFollowChange={handleFollowChange}
+                                />
                             ))}
                         </div>
                     ) : (

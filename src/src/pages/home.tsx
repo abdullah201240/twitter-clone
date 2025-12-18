@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { TweetCompose } from "../components/twitter/tweet-compose"
 import { TwitterFeed } from "../components/twitter/feed"
 import { Murmur, murmurAPI } from "../lib/murmur-api"
@@ -9,7 +9,7 @@ export function HomePage() {
     const [activeTab, setActiveTab] = useState<FeedType>('for-you')
     const [latestTweet, setLatestTweet] = useState<Murmur | undefined>(undefined)
 
-    const handlePost = async (content: string, image?: string) => {
+    const handlePost = useCallback(async (content: string, image?: string) => {
         try {
             const newMurmur = await murmurAPI.createMurmur({
                 content,
@@ -19,7 +19,8 @@ export function HomePage() {
         } catch (error) {
             console.error('Error creating murmur:', error);
         }
-    };
+    }, []);
+
 
     return (
         <>

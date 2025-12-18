@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
 import { useAppDispatch, useAppSelector } from "../store/hooks"
@@ -12,7 +12,7 @@ export function LoginPage() {
     const navigate = useNavigate()
     const { loading, error } = useAppSelector((state) => state.auth)
 
-    const handleLogin = async (e: React.FormEvent) => {
+    const handleLogin = useCallback(async (e: React.FormEvent) => {
         e.preventDefault()
         if (email.trim() && password.trim()) {
             const result = await dispatch(
@@ -22,7 +22,7 @@ export function LoginPage() {
                 navigate("/")
             }
         }
-    }
+    }, [email, password, dispatch, navigate])
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-white dark:bg-black">
