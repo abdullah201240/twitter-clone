@@ -15,7 +15,6 @@ export function BookmarksPage() {
                     timestamp="1d"
                     content="React 19 is now available in beta! Try it out today."
                     comments={120}
-                    retweets={450}
                     likes={2300}
                     isVerified={true}
                 />
