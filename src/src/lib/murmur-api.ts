@@ -16,6 +16,7 @@ export interface Murmur {
   };
   createdAt: string;
   updatedAt: string;
+  isLiked?: boolean;
 }
 
 export interface CreateMurmurRequest {
@@ -138,15 +139,15 @@ class MurmurAPI {
     if (!murmurIds || murmurIds.length === 0) {
       return {};
     }
-    
+
     // Create a key for deduplication
     const sortedIds = [...murmurIds].sort();
     const key = `multiple_like_status_${sortedIds.join(',')}`;
-    
+
     return this.dedupeRequest(key, async () => {
       // Limit the number of IDs to prevent abuse
       const limitedIds = murmurIds.slice(0, 100);
-      
+
       const params = new URLSearchParams();
       limitedIds.forEach(id => params.append('ids', id));
       const response = await this.api.get<Record<string, boolean>>(

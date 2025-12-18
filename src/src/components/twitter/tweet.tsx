@@ -84,11 +84,18 @@ export const Tweet = memo(function TweetComponent({
     }
   }, [murmur?.userId, murmur?.user?.id, navigate])
   const user = useAppSelector((state) => state.auth.user)
-  const [localIsLiked, setLocalIsLiked] = useState(false)
+  // Initialize local state from prop if available
+  const [localIsLiked, setLocalIsLiked] = useState(externalIsLiked ?? false)
   const [likeCount, setLikeCount] = useState(likes)
 
-  // Use external isLiked prop if provided, otherwise use local state
-  const isLiked = externalIsLiked !== undefined ? externalIsLiked : localIsLiked
+  // Sync local state when prop changes
+  useEffect(() => {
+    if (externalIsLiked !== undefined) {
+      setLocalIsLiked(externalIsLiked)
+    }
+  }, [externalIsLiked])
+
+  const isLiked = localIsLiked
   const [commentsList, setCommentsList] = useState<Comment[]>([])
   const [commentCount, setCommentCount] = useState(comments)
   const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false)
@@ -107,7 +114,7 @@ export const Tweet = memo(function TweetComponent({
     }
 
     loadLikeStatus()
-  }, [id, user, externalIsLiked])
+  }, [id, user])
 
   const formatTime = useCallback((dateString: string) => {
     const date = new Date(dateString)
@@ -157,9 +164,8 @@ export const Tweet = memo(function TweetComponent({
       // Update local state or notify parent
       if (externalIsLiked !== undefined && onLikeChange) {
         onLikeChange(result.liked);
-      } else {
-        setLocalIsLiked(result.liked);
       }
+      setLocalIsLiked(result.liked);
 
       setLikeCount(result.likeCount)
     } catch (error) {

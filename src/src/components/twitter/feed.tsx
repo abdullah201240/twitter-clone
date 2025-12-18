@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, memo } from "react"
 import { Tweet } from "./tweet"
 import { TweetSkeleton, FeedSkeleton } from "./index"
 import { murmurAPI, Murmur, TimelineResponse } from "../../lib/murmur-api"
-import { useAppSelector } from "../../store/hooks"
+// import { useAppSelector } from "../../store/hooks"
 
 type FeedType = 'for-you' | 'following'
 
@@ -20,11 +20,9 @@ export function TwitterFeed({ type, newPost }: TwitterFeedProps) {
     const [isInitialLoad, setIsInitialLoad] = useState(true)
     const [nextCursor, setNextCursor] = useState<string | null>(null)
     const [hasMore, setHasMore] = useState(true)
-    const [likeStatuses, setLikeStatuses] = useState<Record<string, boolean>>({})
     const observerTarget = useRef(null)
     const seenIds = useRef(new Set<string>())
-    const fetchedLikeStatuses = useRef(new Set<string>())
-    const user = useAppSelector((state) => state.auth.user)
+    // const user = useAppSelector((state) => state.auth.user)
     const loadingBatchRef = useRef(false)
 
     // Handle new post
@@ -44,36 +42,6 @@ export function TwitterFeed({ type, newPost }: TwitterFeedProps) {
         const endIndex = Math.min(startIndex + VISIBLE_TWEET_COUNT, tweets.length)
         setVisibleTweets(tweets.slice(startIndex, endIndex))
     }, [tweets, startIndex])
-
-    // Fetch like statuses for visible tweets only
-    useEffect(() => {
-        const fetchLikeStatuses = async () => {
-            if (!user || visibleTweets.length === 0) return;
-
-            // Get IDs of visible tweets that haven't had like status fetched yet
-            const tweetIds = visibleTweets
-                .filter(tweet => !fetchedLikeStatuses.current.has(tweet.id))
-                .map(tweet => tweet.id);
-
-            if (tweetIds.length === 0) return;
-
-            try {
-                // Fetch like statuses in batches to avoid URL length limits
-                const batchSize = 50;
-                for (let i = 0; i < tweetIds.length; i += batchSize) {
-                    const batch = tweetIds.slice(i, i + batchSize);
-                    const statuses = await murmurAPI.getMultipleLikeStatus(batch);
-                    setLikeStatuses(prev => ({ ...prev, ...statuses }));
-                    // Mark these IDs as fetched
-                    batch.forEach(id => fetchedLikeStatuses.current.add(id));
-                }
-            } catch (error) {
-                console.error('Error fetching like statuses:', error);
-            }
-        };
-
-        fetchLikeStatuses();
-    }, [user, visibleTweets]);
 
     const loadMoreTweets = useCallback(async () => {
         // Prevent multiple simultaneous requests
@@ -158,9 +126,6 @@ export function TwitterFeed({ type, newPost }: TwitterFeedProps) {
 
             loadInitialBatch();
         }
-        // Clear fetched like statuses when type changes
-        fetchedLikeStatuses.current.clear();
-        setLikeStatuses({});
         // Reset virtual scrolling
         setStartIndex(0);
         // Reset seen IDs when type changes
@@ -244,8 +209,7 @@ export function TwitterFeed({ type, newPost }: TwitterFeedProps) {
                             isVerified={false}
                             murmur={murmur}
                             onDelete={() => handleDelete(murmur.id)}
-                            isLiked={likeStatuses[murmur.id] ?? false}
-                            onLikeChange={(liked) => setLikeStatuses(prev => ({ ...prev, [murmur.id]: liked }))}
+                            isLiked={murmur.isLiked}
                         />
                     ))}
                     {/* Show additional skeletons during infinite scroll loading */}

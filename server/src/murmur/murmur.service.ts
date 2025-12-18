@@ -6,7 +6,7 @@ import { Feed } from '../entities/feed.entity';
 import { User } from '../entities/user.entity';
 
 export interface TimelineResponse {
-  data: Murmur[];
+  data: (Murmur & { isLiked?: boolean })[];
   nextCursor: string | null;
 }
 
@@ -17,7 +17,7 @@ export class MurmurService {
     private readonly murmurRepository: Repository<Murmur>,
     @InjectRepository(Feed)
     private readonly feedRepository: Repository<Feed>,
-  ) {}
+  ) { }
 
   async createMurmur(userId: string, content: string, mediaUrl?: string): Promise<Murmur> {
     if (!content || content.trim().length === 0) {
@@ -35,7 +35,7 @@ export class MurmurService {
     });
 
     const savedMurmur = await this.murmurRepository.save(murmur);
-    
+
 
     // Fan-out on write: Add to creator's feed using query builder for better performance
     // Ignore duplicate key errors as the unique constraint will prevent duplicates
@@ -72,7 +72,7 @@ export class MurmurService {
     return murmur;
   }
 
-  async getUserMurmurs(userId: string, limit: number = 10, cursor?: string): Promise<TimelineResponse> {
+  async getUserMurmurs(userId: string, limit: number = 10, cursor?: string, currentUserId?: string): Promise<TimelineResponse> {
     // Optimized query with proper indexing and select optimization
     const query = this.murmurRepository
       .createQueryBuilder('murmur')
@@ -96,12 +96,28 @@ export class MurmurService {
       .orderBy('murmur.createdAt', 'DESC')
       .limit(limit + 1);
 
+    // Add isLiked status if currentUserId is provided
+    if (currentUserId) {
+      query.addSelect(subQuery => {
+        return subQuery
+          .select('COUNT(like.id) > 0', 'isLiked')
+          .from('likes', 'like')
+          .where('like.murmurId = murmur.id')
+          .andWhere('like.userId = :currentUserId', { currentUserId });
+      }, 'isLiked');
+    }
+
     // Apply cursor if provided
     if (cursor) {
       query.andWhere('murmur.createdAt < :cursor', { cursor: new Date(cursor) });
     }
 
-    const results = await query.getMany();
+    const rawResults = await query.getRawAndEntities();
+    const results = rawResults.entities.map((entity, index) => {
+      const raw = rawResults.raw[index];
+      const isLiked = raw.isLiked !== undefined ? (raw.isLiked === 1 || raw.isLiked === '1' || raw.isLiked === true) : false;
+      return { ...entity, isLiked };
+    });
     const hasMore = results.length > limit;
     const data = results.slice(0, limit);
     const nextCursor = hasMore ? results[limit - 1].createdAt.toISOString() : null;
@@ -152,14 +168,29 @@ export class MurmurService {
       .orderBy('feed.createdAt', 'DESC')
       .limit(limit + 1);
 
+    // Add isLiked status
+    query.addSelect(subQuery => {
+      return subQuery
+        .select('COUNT(like.id) > 0', 'isLiked')
+        .from('likes', 'like')
+        .where('like.murmurId = murmur.id')
+        .andWhere('like.userId = :userId', { userId });
+    }, 'isLiked');
+
     // Apply cursor if provided
     if (cursor) {
       query.andWhere('feed.createdAt < :cursor', { cursor: new Date(cursor) });
     }
 
-    const results = await query.getMany();
+    const rawResults = await query.getRawAndEntities();
+    const results = rawResults.entities.map((entity, index) => {
+      const raw = rawResults.raw[index];
+      const isLiked = raw.isLiked !== undefined ? (raw.isLiked === 1 || raw.isLiked === '1' || raw.isLiked === true) : false;
+      return { ...entity.murmur, isLiked };
+    });
+
     const hasMore = results.length > limit;
-    const data = results.slice(0, limit).map(feed => feed.murmur);
+    const data = results.slice(0, limit);
     const nextCursor = hasMore ? results[limit - 1].createdAt.toISOString() : null;
 
     return {
@@ -168,7 +199,7 @@ export class MurmurService {
     };
   }
 
-  async getGlobalTimeline(limit: number = 10, cursor?: string): Promise<TimelineResponse> {
+  async getGlobalTimeline(limit: number = 10, cursor?: string, currentUserId?: string): Promise<TimelineResponse> {
     // Build query for cursor-based pagination with optimized selects
     const query = this.murmurRepository
       .createQueryBuilder('murmur')
@@ -191,12 +222,28 @@ export class MurmurService {
       .orderBy('murmur.createdAt', 'DESC')
       .limit(limit + 1);
 
+    // Add isLiked status if currentUserId is provided
+    if (currentUserId) {
+      query.addSelect(subQuery => {
+        return subQuery
+          .select('COUNT(like.id) > 0', 'isLiked')
+          .from('likes', 'like')
+          .where('like.murmurId = murmur.id')
+          .andWhere('like.userId = :currentUserId', { currentUserId });
+      }, 'isLiked');
+    }
+
     // Apply cursor if provided
     if (cursor) {
       query.andWhere('murmur.createdAt < :cursor', { cursor: new Date(cursor) });
     }
 
-    const results = await query.getMany();
+    const rawResults = await query.getRawAndEntities();
+    const results = rawResults.entities.map((entity, index) => {
+      const raw = rawResults.raw[index];
+      const isLiked = raw.isLiked !== undefined ? (raw.isLiked === 1 || raw.isLiked === '1' || raw.isLiked === true) : false;
+      return { ...entity, isLiked };
+    });
     const hasMore = results.length > limit;
     const data = results.slice(0, limit);
     const nextCursor = hasMore ? results[limit - 1].createdAt.toISOString() : null;

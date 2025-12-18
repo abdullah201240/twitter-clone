@@ -26,7 +26,7 @@ export class MurmurController {
     private readonly likeService: LikeService,
     private readonly commentService: CommentService,
     private readonly uploadService: UploadService,
-  ) {}
+  ) { }
 
   @Post('/me/murmurs')
   @UseGuards(JwtAuthGuard)
@@ -41,10 +41,13 @@ export class MurmurController {
 
   @Get('/murmurs')
   async getTimeline(
+    @Req() request: Request,
     @Query('limit') limit: number = 10,
     @Query('cursor') cursor?: string,
   ) {
-    return await this.murmurService.getGlobalTimeline(limit, cursor);
+    const user = request.user as any;
+    const userId = user ? user.userId : undefined;
+    return await this.murmurService.getGlobalTimeline(limit, cursor, userId);
   }
 
   @Delete('/me/murmurs/:id')
@@ -70,11 +73,14 @@ export class MurmurController {
 
   @Get('/users/:userId/murmurs')
   async getUserMurmurs(
+    @Req() request: Request,
     @Param('userId') userId: string,
     @Query('limit') limit: number = 10,
     @Query('cursor') cursor?: string,
   ) {
-    return await this.murmurService.getUserMurmurs(userId, limit, cursor);
+    const user = request.user as any;
+    const currentUserId = user ? user.userId : undefined;
+    return await this.murmurService.getUserMurmurs(userId, limit, cursor, currentUserId);
   }
 
   @Post('/murmurs/upload')
@@ -106,17 +112,17 @@ export class MurmurController {
     @Query('ids') murmurIds: string[],
   ) {
     const user = request.user as any;
-    
+
     // Validate input
     if (!murmurIds || !Array.isArray(murmurIds) || murmurIds.length === 0) {
       return {};
     }
-    
+
     // Limit the number of IDs to prevent abuse
     if (murmurIds.length > 100) {
       murmurIds = murmurIds.slice(0, 100);
     }
-    
+
     return await this.likeService.getMultipleLikeStatus(user.userId, murmurIds);
   }
 
