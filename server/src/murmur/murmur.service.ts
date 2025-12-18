@@ -4,7 +4,6 @@ import { Repository, LessThan } from 'typeorm';
 import { Murmur } from '../entities/murmur.entity';
 import { Feed } from '../entities/feed.entity';
 import { User } from '../entities/user.entity';
-import { SearchService } from '../search/search.service';
 
 export interface TimelineResponse {
   data: Murmur[];
@@ -18,7 +17,6 @@ export class MurmurService {
     private readonly murmurRepository: Repository<Murmur>,
     @InjectRepository(Feed)
     private readonly feedRepository: Repository<Feed>,
-    private readonly searchService: SearchService,
   ) {}
 
   async createMurmur(userId: string, content: string, mediaUrl?: string): Promise<Murmur> {
@@ -38,9 +36,7 @@ export class MurmurService {
 
     const savedMurmur = await this.murmurRepository.save(murmur);
     
-    // Index murmur in Elasticsearch
-    await this.searchService.indexMurmur(savedMurmur);
-    
+
     // Fan-out on write: Add to creator's feed
     await this.feedRepository.insert({
       userId,
@@ -157,8 +153,6 @@ export class MurmurService {
     }
 
     await this.murmurRepository.remove(murmur);
-    // Remove from Elasticsearch
-    await this.searchService.deleteMurmurFromIndex(id);
     return true;
   }
 

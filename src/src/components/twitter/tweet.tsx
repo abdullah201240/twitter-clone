@@ -4,10 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import { Button } from "../ui/button"
 import {
   MessageCircle,
-  Repeat2,
-  Heart,
-  Share,
-  BarChart2
+  Heart
 } from "lucide-react"
 import { Badge } from "../ui/badge"
 import { CommentDialog } from "./comment-dialog"
@@ -32,9 +29,7 @@ export function Tweet({
   content = "This is a sample tweet content. Twitter clones are fun to build with shadcn UI components!",
   image,
   comments = 10,
-  retweets = 5,
   likes = 50,
-  views = 1000,
   isVerified = true,
   murmur
 }: {
@@ -46,7 +41,6 @@ export function Tweet({
   content?: string
   image?: string
   comments?: number
-  retweets?: number
   likes?: number
   views?: number
   isVerified?: boolean
@@ -61,8 +55,6 @@ export function Tweet({
   const user = useAppSelector((state) => state.auth.user)
   const [isLiked, setIsLiked] = useState(false)
   const [likeCount, setLikeCount] = useState(likes)
-  const [isRetweeted, setIsRetweeted] = useState(false)
-  const [retweetCount, setRetweetCount] = useState(retweets)
   const [commentsList, setCommentsList] = useState<Comment[]>([])
   const [commentCount, setCommentCount] = useState(comments)
   const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false)
@@ -96,15 +88,6 @@ export function Tweet({
     }
   }
 
-  const handleRetweet = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (isRetweeted) {
-      setRetweetCount(prev => prev - 1)
-    } else {
-      setRetweetCount(prev => prev + 1)
-    }
-    setIsRetweeted(!isRetweeted)
-  }
 
   const handleComment = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -177,15 +160,7 @@ export function Tweet({
                 <MessageCircle className="mr-1 h-4 w-4 md:h-5 md:w-5" />
                 <span className="text-xs md:text-sm">{formatNumber(commentCount)}</span>
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`${isRetweeted ? 'text-green-500' : 'text-gray-500'} hover:text-green-500 h-9 px-2 md:px-3`}
-                onClick={handleRetweet}
-              >
-                <Repeat2 className="mr-1 h-4 w-4 md:h-5 md:w-5" />
-                <span className="text-xs md:text-sm">{formatNumber(retweetCount)}</span>
-              </Button>
+              
               <Button
                 variant="ghost"
                 size="sm"
@@ -195,13 +170,8 @@ export function Tweet({
                 <Heart className={`mr-1 h-4 w-4 md:h-5 md:w-5 ${isLiked ? 'fill-current' : ''}`} />
                 <span className="text-xs md:text-sm">{formatNumber(likeCount)}</span>
               </Button>
-              <Button variant="ghost" size="sm" className="text-gray-500 hover:text-blue-500 h-9 px-2 md:px-3">
-                <BarChart2 className="mr-1 h-4 w-4 md:h-5 md:w-5" />
-                <span className="text-xs md:text-sm">{formatNumber(views)}</span>
-              </Button>
-              <Button variant="ghost" size="sm" className="text-gray-500 hover:text-blue-500 h-9 px-2">
-                <Share className="h-4 w-4 md:h-5 md:w-5" />
-              </Button>
+             
+             
             </div>
           </div>
         </div>

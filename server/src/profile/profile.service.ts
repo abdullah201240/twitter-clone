@@ -4,7 +4,6 @@ import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
 import { MurmurService } from '../murmur/murmur.service';
 import { FollowService } from './follow.service';
-import { SearchService } from '../search/search.service';
 import { UpdateProfileDto, ProfileResponseDto } from './profile.dto';
 import { UploadService } from '../upload/upload.service';
 
@@ -17,7 +16,6 @@ export class ProfileService {
     private readonly userRepository: Repository<User>,
     private readonly murmurService: MurmurService,
     private readonly followService: FollowService,
-    private readonly searchService: SearchService,
     private readonly uploadService: UploadService,
   ) {}
 
@@ -54,8 +52,6 @@ export class ProfileService {
     if (updateData.website !== undefined) user.website = updateData.website;
 
     await this.userRepository.save(user);
-    // Index user in Elasticsearch
-    await this.searchService.indexUser(user);
     this.logger.log(`Successfully updated profile for user: ${userId}`);
     return await this.mapToProfileResponse(user);
   }
@@ -87,8 +83,6 @@ export class ProfileService {
     // Set new avatar
     user.avatar = this.uploadService.getPublicUrl(file.filename);
     await this.userRepository.save(user);
-    // Index user in Elasticsearch
-    await this.searchService.indexUser(user);
     this.logger.log(`Successfully uploaded avatar for user: ${userId}`);
     return await this.mapToProfileResponse(user);
   }
@@ -120,8 +114,6 @@ export class ProfileService {
     // Set new cover image
     user.coverImage = this.uploadService.getPublicUrl(file.filename);
     await this.userRepository.save(user);
-    // Index user in Elasticsearch
-    await this.searchService.indexUser(user);
     this.logger.log(`Successfully uploaded cover image for user: ${userId}`);
     return await this.mapToProfileResponse(user);
   }

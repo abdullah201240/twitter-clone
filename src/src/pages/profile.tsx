@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from "react"
 import { Button } from "../components/ui/button"
-import { ArrowLeft, Calendar, Link as LinkIcon, MapPin, Camera, MessageCircle, Repeat, Heart, Share } from "lucide-react"
+import { ArrowLeft, Calendar, Link as LinkIcon, MapPin, Camera, MessageCircle, Heart } from "lucide-react"
 import { useAppSelector } from "../store/hooks"
 import { useNavigate, useParams } from "react-router-dom"
 import { profileAPI, ProfileData } from "../lib/profile-api"
-import { murmurAPI, Murmur, TimelineResponse } from "../lib/murmur-api"
+import { murmurAPI, Murmur } from "../lib/murmur-api"
 import { Input } from "../components/ui/input"
 import { Textarea } from "../components/ui/textarea"
 import { FollowButton } from "../components/twitter/follow-button"
@@ -376,17 +376,12 @@ export function ProfilePage() {
                                             <MessageCircle className="w-4 h-4" />
                                             <span>{murmur.replyCount}</span>
                                         </button>
-                                        <button className="flex items-center gap-1 hover:text-green-500 transition">
-                                            <Repeat className="w-4 h-4" />
-                                            <span>{murmur.repostCount}</span>
-                                        </button>
+                                       
                                         <button className="flex items-center gap-1 hover:text-red-500 transition">
                                             <Heart className="w-4 h-4" />
                                             <span>{murmur.likeCount}</span>
                                         </button>
-                                        <button className="flex items-center gap-1 hover:text-sky-500 transition">
-                                            <Share className="w-4 h-4" />
-                                        </button>
+                                        
                                     </div>
                                 </div>
                             </div>

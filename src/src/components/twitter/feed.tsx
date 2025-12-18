@@ -100,7 +100,6 @@ export function TwitterFeed({ type, newPost }: TwitterFeedProps) {
                     content={murmur.content}
                     image={murmur.mediaUrl || undefined}
                     comments={murmur.replyCount}
-                    retweets={murmur.repostCount}
                     likes={murmur.likeCount}
                     views={0}
                     isVerified={false}

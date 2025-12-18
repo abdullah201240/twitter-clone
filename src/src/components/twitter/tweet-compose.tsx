@@ -60,12 +60,6 @@ export function TweetCompose({ onPost }: TweetComposeProps) {
         }
       }
 
-      // Create the murmur with or without the image
-      const murmur = await murmurAPI.createMurmur({
-        content: content.trim(),
-        mediaUrl,
-      })
-
       if (onPost) {
         onPost(content, mediaUrl)
       }
@@ -146,7 +140,7 @@ export function TweetCompose({ onPost }: TweetComposeProps) {
       <div className="flex">
         <div className="mr-4 flex-shrink-0">
           <Avatar>
-            <AvatarImage src={user?.avatar || "https://github.com/shadcn.png"} alt={user?.handle} />
+            <AvatarImage src={user?.avatar || "https://github.com/shadcn.png"} alt={`@${user?.username}`} />
             <AvatarFallback>{user?.username?.[0]}</AvatarFallback>
           </Avatar>
         </div>

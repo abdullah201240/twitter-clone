@@ -9,10 +9,9 @@ import { LikeService } from './like.service';
 import { CommentService } from './comment.service';
 import { MurmurController } from './murmur.controller';
 import { UploadService } from '../upload/upload.service';
-import { SearchModule } from '../search/search.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Murmur, Feed, Like, Comment]), SearchModule],
+  imports: [TypeOrmModule.forFeature([Murmur, Feed, Like, Comment])],
   controllers: [MurmurController],
   providers: [MurmurService, LikeService, CommentService, UploadService],
   exports: [MurmurService, LikeService, CommentService],

@@ -1,21 +1,11 @@
 import { useState, useEffect } from "react"
 import { useParams, useLocation, useNavigate } from "react-router-dom"
-import { ArrowLeft, Heart, MessageCircle, Repeat2, Share, BarChart2, Loader2 } from "lucide-react"
+import { ArrowLeft, Heart, MessageCircle, Loader2 } from "lucide-react"
 import { Button } from "../components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar"
-import { Badge } from "../components/ui/badge"
 import { Murmur, murmurAPI, CommentData } from "../lib/murmur-api"
 import { CommentDialog } from "../components/twitter/comment-dialog"
 import { useAppSelector } from "../store/hooks"
-
-interface Comment {
-  id: number
-  username: string
-  handle: string
-  content: string
-  timestamp: string
-  isVerified: boolean
-}
 
 export function PostDetailPage() {
   const { postId } = useParams<{ postId: string }>()
@@ -27,8 +17,6 @@ export function PostDetailPage() {
 
   const [isLiked, setIsLiked] = useState(false)
   const [likeCount, setLikeCount] = useState(murmur?.likeCount || 0)
-  const [isRetweeted, setIsRetweeted] = useState(false)
-  const [retweetCount, setRetweetCount] = useState(murmur?.repostCount || 0)
   const [commentsList, setCommentsList] = useState<CommentData[]>([])
   const [commentCount, setCommentCount] = useState(murmur?.replyCount || 0)
   const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false)
@@ -86,15 +74,6 @@ export function PostDetailPage() {
     } catch (error) {
       console.error('Error toggling like:', error)
     }
-  }
-
-  const handleRetweet = () => {
-    if (isRetweeted) {
-      setRetweetCount(prev => prev - 1)
-    } else {
-      setRetweetCount(prev => prev + 1)
-    }
-    setIsRetweeted(!isRetweeted)
   }
 
   const handleComment = () => {
@@ -186,10 +165,7 @@ export function PostDetailPage() {
             <span className="font-bold text-gray-900 dark:text-white">{formatNumber(commentCount)}</span>
             <span className="ml-2">Comments</span>
           </div>
-          <div>
-            <span className="font-bold text-gray-900 dark:text-white">{formatNumber(retweetCount)}</span>
-            <span className="ml-2">Reposts</span>
-          </div>
+          
           <div>
             <span className="font-bold text-gray-900 dark:text-white">{formatNumber(likeCount)}</span>
             <span className="ml-2">Likes</span>
@@ -209,22 +185,12 @@ export function PostDetailPage() {
           <Button
             variant="ghost"
             size="sm"
-            className={`${isRetweeted ? 'text-green-500' : 'text-gray-500'} hover:text-green-500 flex-1`}
-            onClick={handleRetweet}
-          >
-            <Repeat2 className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
             className={`${isLiked ? 'text-pink-600' : 'text-gray-500'} hover:text-pink-600 flex-1`}
             onClick={handleLike}
           >
             <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
           </Button>
-          <Button variant="ghost" size="sm" className="text-gray-500 hover:text-blue-500 flex-1">
-            <Share className="h-5 w-5" />
-          </Button>
+         
         </div>
       </div>
 

@@ -13,7 +13,6 @@ import { Follow } from './entities/follow.entity';
 import { AuthModule } from './auth/auth.module';
 import { ProfileModule } from './profile/profile.module';
 import { MurmurModule } from './murmur/murmur.module';
-import { SearchModule } from './search/search.module';
 import { LoggerMiddleware } from './logger.middleware';
 import { UploadCorsMiddleware } from './upload/upload.middleware';
 
@@ -54,7 +53,6 @@ import { UploadCorsMiddleware } from './upload/upload.middleware';
     AuthModule,
     ProfileModule,
     MurmurModule,
-    SearchModule,
   ],
   controllers: [AppController],
   providers: [AppService],
