@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Follow } from '../entities/follow.entity';
 import { User } from '../entities/user.entity';
 
@@ -136,5 +136,40 @@ export class FollowService {
     return await this.followRepository.count({
       where: { followerId: userId },
     });
+  }
+
+  async getMultipleFollowStatus(userId: string, targetUserIds: string[]): Promise<Record<string, boolean>> {
+    try {
+      if (!targetUserIds || targetUserIds.length === 0) {
+        return {};
+      }
+      
+      // Limit the number of IDs to prevent abuse
+      if (targetUserIds.length > 100) {
+        targetUserIds = targetUserIds.slice(0, 100);
+      }
+      
+      // Fetch all follows for the given user and target user IDs in a single query
+      const follows = await this.followRepository.find({
+        where: {
+          followerId: userId,
+          followingId: In(targetUserIds),
+        },
+      });
+      
+      // Create a set of followed user IDs for fast lookup
+      const followedUserIds = new Set(follows.map(follow => follow.followingId));
+      
+      // Build the result object
+      const result: Record<string, boolean> = {};
+      for (const targetUserId of targetUserIds) {
+        result[targetUserId] = followedUserIds.has(targetUserId);
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error fetching multiple follow statuses:', error);
+      return {};
+    }
   }
 }

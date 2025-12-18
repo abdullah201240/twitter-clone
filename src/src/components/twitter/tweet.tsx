@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu"
 import { toast } from "sonner"
+import { LazyImage } from "../ui/lazy-image"
 
 interface Comment {
   id: number
@@ -263,7 +264,7 @@ export function Tweet({
             </div>
             {image && (
               <div className="mt-2 mb-3 rounded-2xl overflow-hidden border">
-                <img src={image} alt="Tweet attachment" className="w-full h-auto object-contain max-h-[500px]" />
+                <LazyImage src={image} alt="Tweet attachment" className="w-full h-auto object-contain max-h-[500px]" />
               </div>
             )}
             <div className="flex justify-between max-w-md -ml-2">

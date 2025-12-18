@@ -22,6 +22,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "../ui/popover"
+import { LazyImage } from "../ui/lazy-image"
 
 interface TweetComposeProps {
   onPost?: (content: string, image?: string) => void
@@ -154,7 +155,7 @@ export function TweetCompose({ onPost }: TweetComposeProps) {
 
           {imagePreview && (
             <div className="relative mt-2 mb-4">
-              <img src={imagePreview} alt="Preview" className="rounded-2xl max-h-[300px] object-contain border" />
+              <LazyImage src={imagePreview} alt="Preview" className="rounded-2xl max-h-[300px] object-contain border" />
               <Button
                 variant="secondary"
                 size="icon"

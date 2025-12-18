@@ -55,6 +55,20 @@ export interface LikeResponse {
 
 class MurmurAPI {
   private api = authAPI.getApi();
+  private pendingRequests: Map<string, Promise<any>> = new Map();
+
+  private async dedupeRequest<T>(key: string, requestFn: () => Promise<T>): Promise<T> {
+    if (this.pendingRequests.has(key)) {
+      return this.pendingRequests.get(key)!;
+    }
+
+    const promise = requestFn().finally(() => {
+      this.pendingRequests.delete(key);
+    });
+
+    this.pendingRequests.set(key, promise);
+    return promise;
+  }
 
   async createMurmur(data: CreateMurmurRequest): Promise<Murmur> {
     const response = await this.api.post<Murmur>('http://localhost:3001/api/me/murmurs', data);
@@ -72,23 +86,29 @@ class MurmurAPI {
   }
 
   async getTimeline(limit: number = 10, cursor?: string): Promise<TimelineResponse> {
-    const params = new URLSearchParams();
-    params.append('limit', limit.toString());
-    if (cursor) {
-      params.append('cursor', cursor);
-    }
-    const response = await this.api.get<TimelineResponse>(`http://localhost:3001/api/murmurs?${params}`);
-    return response.data;
+    const key = `timeline_${limit}_${cursor || 'initial'}`;
+    return this.dedupeRequest(key, async () => {
+      const params = new URLSearchParams();
+      params.append('limit', limit.toString());
+      if (cursor) {
+        params.append('cursor', cursor);
+      }
+      const response = await this.api.get<TimelineResponse>(`http://localhost:3001/api/murmurs?${params}`);
+      return response.data;
+    });
   }
 
   async getFeed(limit: number = 10, cursor?: string): Promise<TimelineResponse> {
-    const params = new URLSearchParams();
-    params.append('limit', limit.toString());
-    if (cursor) {
-      params.append('cursor', cursor);
-    }
-    const response = await this.api.get<TimelineResponse>(`http://localhost:3001/api/feed?${params}`);
-    return response.data;
+    const key = `feed_${limit}_${cursor || 'initial'}`;
+    return this.dedupeRequest(key, async () => {
+      const params = new URLSearchParams();
+      params.append('limit', limit.toString());
+      if (cursor) {
+        params.append('cursor', cursor);
+      }
+      const response = await this.api.get<TimelineResponse>(`http://localhost:3001/api/feed?${params}`);
+      return response.data;
+    });
   }
 
   async deleteMurmur(id: string): Promise<void> {
@@ -104,10 +124,13 @@ class MurmurAPI {
   }
 
   async getLikeStatus(murmurId: string): Promise<{ isLiked: boolean }> {
-    const response = await this.api.get<{ isLiked: boolean }>(
-      `http://localhost:3001/api/murmurs/${murmurId}/like-status`
-    );
-    return response.data;
+    const key = `like_status_${murmurId}`;
+    return this.dedupeRequest(key, async () => {
+      const response = await this.api.get<{ isLiked: boolean }>(
+        `http://localhost:3001/api/murmurs/${murmurId}/like-status`
+      );
+      return response.data;
+    });
   }
 
   async getMultipleLikeStatus(murmurIds: string[]): Promise<Record<string, boolean>> {
@@ -116,15 +139,21 @@ class MurmurAPI {
       return {};
     }
     
-    // Limit the number of IDs to prevent abuse
-    const limitedIds = murmurIds.slice(0, 100);
+    // Create a key for deduplication
+    const sortedIds = [...murmurIds].sort();
+    const key = `multiple_like_status_${sortedIds.join(',')}`;
     
-    const params = new URLSearchParams();
-    limitedIds.forEach(id => params.append('ids', id));
-    const response = await this.api.get<Record<string, boolean>>(
-      `http://localhost:3001/api/murmurs/like-status?${params}`
-    );
-    return response.data;
+    return this.dedupeRequest(key, async () => {
+      // Limit the number of IDs to prevent abuse
+      const limitedIds = murmurIds.slice(0, 100);
+      
+      const params = new URLSearchParams();
+      limitedIds.forEach(id => params.append('ids', id));
+      const response = await this.api.get<Record<string, boolean>>(
+        `http://localhost:3001/api/murmurs/like-status?${params}`
+      );
+      return response.data;
+    });
   }
 
   async createComment(murmurId: string, content: string): Promise<CommentData> {

@@ -3,6 +3,7 @@ import { ValidationPipe, BadRequestException } from '@nestjs/common';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
 import * as cors from 'cors';
+import * as compression from 'compression';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as path from 'path';
 
@@ -13,6 +14,9 @@ async function bootstrap() {
   app.useStaticAssets(path.join(process.cwd(), 'uploads'), {
     prefix: '/uploads',
   });
+
+  // Add compression middleware
+  app.use(compression());
 
   app.use(helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },

@@ -40,10 +40,27 @@ export interface UpdateProfilePayload {
 
 class ProfileAPI {
   private api = authAPI.getApi();
+  private pendingRequests: Map<string, Promise<any>> = new Map();
+
+  private async dedupeRequest<T>(key: string, requestFn: () => Promise<T>): Promise<T> {
+    if (this.pendingRequests.has(key)) {
+      return this.pendingRequests.get(key)!;
+    }
+
+    const promise = requestFn().finally(() => {
+      this.pendingRequests.delete(key);
+    });
+
+    this.pendingRequests.set(key, promise);
+    return promise;
+  }
 
   async getProfile(userId: string): Promise<ProfileData> {
-    const response = await this.api.get<ProfileData>(`http://localhost:3001/api/profile/${userId}`);
-    return response.data;
+    const key = `profile_${userId}`;
+    return this.dedupeRequest(key, async () => {
+      const response = await this.api.get<ProfileData>(`http://localhost:3001/api/profile/${userId}`);
+      return response.data;
+    });
   }
 
   async updateProfile(data: UpdateProfilePayload): Promise<ProfileData> {
@@ -81,24 +98,56 @@ class ProfileAPI {
   }
 
   async getFollowStatus(userId: string): Promise<FollowStatus> {
-    const response = await this.api.get<FollowStatus>(`http://localhost:3001/api/profile/${userId}/follow-status`);
-    return response.data;
+    const key = `follow_status_${userId}`;
+    return this.dedupeRequest(key, async () => {
+      const response = await this.api.get<FollowStatus>(`http://localhost:3001/api/profile/${userId}/follow-status`);
+      return response.data;
+    });
   }
 
   async getFollowers(userId: string, limit: number = 20, offset: number = 0): Promise<UserWithFollowStatus[]> {
-    const params = new URLSearchParams();
-    params.append('limit', limit.toString());
-    params.append('offset', offset.toString());
-    const response = await this.api.get<UserWithFollowStatus[]>(`http://localhost:3001/api/profile/${userId}/followers?${params}`);
-    return response.data;
+    const key = `followers_${userId}_${limit}_${offset}`;
+    return this.dedupeRequest(key, async () => {
+      const params = new URLSearchParams();
+      params.append('limit', limit.toString());
+      params.append('offset', offset.toString());
+      const response = await this.api.get<UserWithFollowStatus[]>(`http://localhost:3001/api/profile/${userId}/followers?${params}`);
+      return response.data;
+    });
   }
 
   async getFollowing(userId: string, limit: number = 20, offset: number = 0): Promise<UserWithFollowStatus[]> {
-    const params = new URLSearchParams();
-    params.append('limit', limit.toString());
-    params.append('offset', offset.toString());
-    const response = await this.api.get<UserWithFollowStatus[]>(`http://localhost:3001/api/profile/${userId}/following?${params}`);
-    return response.data;
+    const key = `following_${userId}_${limit}_${offset}`;
+    return this.dedupeRequest(key, async () => {
+      const params = new URLSearchParams();
+      params.append('limit', limit.toString());
+      params.append('offset', offset.toString());
+      const response = await this.api.get<UserWithFollowStatus[]>(`http://localhost:3001/api/profile/${userId}/following?${params}`);
+      return response.data;
+    });
+  }
+
+  async getMultipleFollowStatus(userIds: string[]): Promise<Record<string, boolean>> {
+    // Validate input
+    if (!userIds || userIds.length === 0) {
+      return {};
+    }
+    
+    // Create a key for deduplication
+    const sortedIds = [...userIds].sort();
+    const key = `multiple_follow_status_${sortedIds.join(',')}`;
+    
+    return this.dedupeRequest(key, async () => {
+      // Limit the number of IDs to prevent abuse
+      const limitedIds = userIds.slice(0, 100);
+      
+      const params = new URLSearchParams();
+      limitedIds.forEach(id => params.append('ids', id));
+      const response = await this.api.get<Record<string, boolean>>(
+        `http://localhost:3001/api/profile/follow-status?${params}`
+      );
+      return response.data;
+    });
   }
 }
 

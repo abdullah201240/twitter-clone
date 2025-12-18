@@ -11,7 +11,12 @@ export const dataSourceOptions: DataSourceOptions = {
     migrations: ['src/migrations/*.ts'],
     migrationsTableName: 'migrations',
     synchronize: false,
-    logging: true,
+    logging: false,
+    // Add connection pooling parameters
+    extra: {
+        connectionLimit: 20, // Adjust based on your server capacity
+        queueLimit: 0,
+    }
 };
 
 const dataSource = new DataSource(dataSourceOptions);

@@ -102,4 +102,25 @@ export class ProfileController {
   ) {
     return await this.followService.getFollowing(userId, limit, offset);
   }
+
+  @Get('/follow-status')
+  @UseGuards(JwtAuthGuard)
+  async getMultipleFollowStatus(
+    @Req() request: Request,
+    @Query('ids') userIds: string[],
+  ) {
+    const user = request.user as any;
+    
+    // Validate input
+    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+      return {};
+    }
+    
+    // Limit the number of IDs to prevent abuse
+    if (userIds.length > 100) {
+      userIds = userIds.slice(0, 100);
+    }
+    
+    return await this.followService.getMultipleFollowStatus(user.userId, userIds);
+  }
 }
