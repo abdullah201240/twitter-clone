@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, memo } from "react"
 import { useNavigate } from "react-router-dom"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import { Button } from "../ui/button"
@@ -30,7 +30,8 @@ interface Comment {
   avatar?: string | null
 }
 
-export function Tweet({
+// Memoized Tweet component to prevent unnecessary re-renders
+export const Tweet = memo(function TweetComponent({
   id,
   username = "User Name",
   handle = "@username",
@@ -307,4 +308,4 @@ export function Tweet({
       />
     </>
   )
-}
+})

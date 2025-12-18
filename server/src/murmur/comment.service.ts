@@ -67,7 +67,7 @@ export class CommentService {
     };
   }
 
-  async getCommentsByMurmur(murmurId: string, limit: number = 20, offset: number = 0): Promise<CommentResponse[]> {
+  async getCommentsByMurmur(murmurId: string, limit: number = 10, offset: number = 0): Promise<CommentResponse[]> {
     const comments = await this.commentRepository.find({
       where: { murmurId },
       relations: ['user'],

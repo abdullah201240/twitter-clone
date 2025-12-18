@@ -28,23 +28,23 @@ export function HomePage() {
                 <div className="flex">
                     <div
                         onClick={() => setActiveTab('for-you')}
-                        className="flex-1 p-4 md:p-4 hover:bg-gray-200/50 dark:hover:bg-gray-800/50 cursor-pointer transition flex justify-center relative min-h-[53px]"
+                        className="flex-1 p-4 md:p-4 hover:bg-gray-200/50 dark:hover:bg-gray-800/50 cursor-pointer transition flex justify-center relative min-h-13.25"
                     >
                         <div className={`relative h-full flex items-center ${activeTab === 'for-you' ? 'font-bold' : 'text-gray-500 font-medium'}`}>
                             For you
                             {activeTab === 'for-you' && (
-                                <div className="absolute bottom-[-17px] left-0 right-0 h-[4px] bg-sky-500 rounded-full" />
+                                <div className="absolute -bottom-4.25 left-0 right-0 h-1 bg-sky-500 rounded-full" />
                             )}
                         </div>
                     </div>
                     <div
                         onClick={() => setActiveTab('following')}
-                        className="flex-1 p-4 md:p-4 hover:bg-gray-200/50 dark:hover:bg-gray-800/50 cursor-pointer transition flex justify-center relative min-h-[53px]"
+                        className="flex-1 p-4 md:p-4 hover:bg-gray-200/50 dark:hover:bg-gray-800/50 cursor-pointer transition flex justify-center relative min-h-13.25"
                     >
                         <div className={`relative h-full flex items-center ${activeTab === 'following' ? 'font-bold' : 'text-gray-500 font-medium'}`}>
                             Following
                             {activeTab === 'following' && (
-                                <div className="absolute bottom-[-17px] left-0 right-0 h-[4px] bg-sky-500 rounded-full" />
+                                <div className="absolute -bottom-4.25 left-0 right-0 h-1 bg-sky-500 rounded-full" />
                             )}
                         </div>
                     </div>

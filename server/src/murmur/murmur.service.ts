@@ -114,7 +114,7 @@ export class MurmurService {
       .innerJoinAndSelect('murmur.user', 'user')
       .where('feed.userId = :userId', { userId })
       .orderBy('feed.createdAt', 'DESC')
-      .take(limit + 1); // Fetch one extra to determine if there are more
+      .take(limit + 1);
 
     // Apply cursor if provided
     if (cursor) {
@@ -138,7 +138,7 @@ export class MurmurService {
       .createQueryBuilder('murmur')
       .innerJoinAndSelect('murmur.user', 'user')
       .orderBy('murmur.createdAt', 'DESC')
-      .take(limit + 1); // Fetch one extra to determine if there are more
+      .take(limit + 1);
 
     // Apply cursor if provided
     if (cursor) {

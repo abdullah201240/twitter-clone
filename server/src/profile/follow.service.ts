@@ -82,7 +82,7 @@ export class FollowService {
     return !!follow;
   }
 
-  async getFollowers(userId: string, limit: number = 20, offset: number = 0): Promise<UserWithFollowStatus[]> {
+  async getFollowers(userId: string, limit: number = 10, offset: number = 0): Promise<UserWithFollowStatus[]> {
     const followers = await this.followRepository
       .createQueryBuilder('follow')
       .innerJoinAndSelect('follow.follower', 'follower')
@@ -104,7 +104,7 @@ export class FollowService {
     }));
   }
 
-  async getFollowing(userId: string, limit: number = 20, offset: number = 0): Promise<UserWithFollowStatus[]> {
+  async getFollowing(userId: string, limit: number = 10, offset: number = 0): Promise<UserWithFollowStatus[]> {
     const following = await this.followRepository
       .createQueryBuilder('follow')
       .innerJoinAndSelect('follow.following', 'following')

@@ -1,15 +1,16 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 
 interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   placeholderSrc?: string;
 }
 
-export function LazyImage({ 
-  src, 
-  alt, 
+// Memoized LazyImage component to prevent unnecessary re-renders
+export const LazyImage = memo(function LazyImageComponent({
+  src,
+  alt,
   placeholderSrc,
   className,
-  ...props 
+  ...props
 }: LazyImageProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
@@ -26,7 +27,8 @@ export function LazyImage({
         }
       },
       {
-        rootMargin: "50px", // Start loading slightly before entering viewport
+        rootMargin: "100px", // Start loading earlier to improve perceived performance
+        threshold: 0.1
       }
     );
 
@@ -54,6 +56,7 @@ export function LazyImage({
           alt={alt}
           className={`${className || ""} ${isLoaded ? "opacity-100" : "opacity-0"} transition-opacity duration-300`}
           onLoad={handleLoad}
+          loading="lazy"
           {...props}
         />
       )}
@@ -65,6 +68,7 @@ export function LazyImage({
           src={placeholderSrc}
           alt={alt}
           className={`${className || ""} opacity-100 blur-sm scale-105`}
+          loading="lazy"
           {...props}
         />
       )}
@@ -73,4 +77,4 @@ export function LazyImage({
       )}
     </div>
   );
-}
+})

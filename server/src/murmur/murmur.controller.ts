@@ -156,7 +156,7 @@ export class MurmurController {
   @Get('/murmurs/:murmurId/comments')
   async getComments(
     @Param('murmurId') murmurId: string,
-    @Query('limit') limit: number = 20,
+    @Query('limit') limit: number = 10,
     @Query('offset') offset: number = 0,
   ) {
     return await this.commentService.getCommentsByMurmur(murmurId, limit, offset);

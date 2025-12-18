@@ -131,7 +131,7 @@ export class ProfileController {
   @Get('/:userId/followers')
   async getFollowers(
     @Param('userId') userId: string,
-    @Query('limit') limit: number = 20,
+    @Query('limit') limit: number = 10,
     @Query('offset') offset: number = 0,
   ) {
     return await this.followService.getFollowers(userId, limit, offset);
@@ -140,7 +140,7 @@ export class ProfileController {
   @Get('/:userId/following')
   async getFollowing(
     @Param('userId') userId: string,
-    @Query('limit') limit: number = 20,
+    @Query('limit') limit: number = 10,
     @Query('offset') offset: number = 0,
   ) {
     return await this.followService.getFollowing(userId, limit, offset);

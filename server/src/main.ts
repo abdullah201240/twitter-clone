@@ -2,8 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, BadRequestException } from '@nestjs/common';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
-import * as cors from 'cors';
-import * as compression from 'compression';
+import compression = require('compression');
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as path from 'path';
 
@@ -15,23 +14,27 @@ async function bootstrap() {
     prefix: '/uploads',
   });
 
-  // Add compression middleware
-  app.use(compression());
+  const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000';
 
+  // Add compression middleware
+  app.use(
+    compression({
+      level: 6,
+      threshold: 1024,
+    }),
+  );
   app.use(helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
     crossOriginEmbedderPolicy: { policy: 'require-corp' },
     crossOriginOpenerPolicy: { policy: 'same-origin' },
   }));
-  app.use(cors({
-    origin: true, // Allow all origins
+  app.enableCors({
+    origin: corsOrigin.split(',').map(origin => origin.trim()),
     credentials: true,
-    exposedHeaders: ['Content-Disposition'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
-  }));
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type,Authorization,X-Requested-With,Accept,Origin',
+    exposedHeaders: 'Authorization',
+  });
 
   // Enable global validation pipe
   app.useGlobalPipes(
