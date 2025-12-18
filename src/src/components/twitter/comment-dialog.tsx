@@ -59,7 +59,7 @@ export function CommentDialog({
             <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="sr-only">Reply to tweet</DialogTitle>
-                    
+
                 </DialogHeader>
 
                 {/* Original Tweet */}
@@ -99,10 +99,10 @@ export function CommentDialog({
                             placeholder="Post your reply"
                             value={commentText}
                             onChange={(e) => setCommentText(e.target.value)}
-                            className="min-h-[100px] border-none focus-visible:ring-0 resize-none text-lg"
+                            className="min-h-25 border-none focus-visible:ring-0 resize-none text-lg"
                         />
                         <div className="flex justify-between items-center mt-3">
-                            
+
                             <Button
                                 onClick={handleSubmit}
                                 disabled={!commentText.trim()}

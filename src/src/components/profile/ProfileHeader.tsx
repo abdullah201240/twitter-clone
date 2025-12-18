@@ -28,9 +28,9 @@ export function ProfileHeader({
             {/* Cover & Avatar */}
             <div className="relative h-48 bg-gray-200 dark:bg-gray-800 w-full group cursor-pointer">
                 {profile.coverImage ? (
-                    <img 
-                        src={profile.coverImage} 
-                        alt="Cover" 
+                    <img
+                        src={profile.coverImage}
+                        alt="Cover"
                         className="w-full h-full object-contain"
                         loading="eager"
                         onError={(e) => {
@@ -39,13 +39,14 @@ export function ProfileHeader({
                         }}
                     />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-r from-blue-400 to-purple-500" />
+                    <div className="w-full h-full bg-linear-to-r from-blue-400 to-purple-500" />
                 )}
                 {isOwnProfile && (
                     <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                         <label className="cursor-pointer">
                             <Camera className="h-8 w-8 text-white" />
                             <input
+                                title="Change cover photo"
                                 type="file"
                                 accept="image/*"
                                 className="hidden"
@@ -60,9 +61,9 @@ export function ProfileHeader({
                     <div className="relative w-32 h-32 group/avatar">
                         <div className="w-32 h-32 rounded-full bg-black p-1 flex items-center justify-center">
                             {profile.avatar ? (
-                                <img 
-                                    src={profile.avatar} 
-                                    alt="Profile" 
+                                <img
+                                    src={profile.avatar}
+                                    alt="Profile"
                                     className="w-full h-full rounded-full object-contain"
                                     loading="eager"
                                     onError={(e) => {
@@ -71,7 +72,7 @@ export function ProfileHeader({
                                     }}
                                 />
                             ) : (
-                                <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-3xl font-bold text-white">
+                                <div className="w-full h-full rounded-full bg-linear-to-br from-blue-400 to-purple-500 flex items-center justify-center text-3xl font-bold text-white">
                                     {profile.name.charAt(0)?.toUpperCase()}
                                 </div>
                             )}
@@ -80,6 +81,7 @@ export function ProfileHeader({
                             <label className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover/avatar:opacity-100 transition flex items-center justify-center cursor-pointer">
                                 <Camera className="h-6 w-6 text-white" />
                                 <input
+                                    title="change profile"
                                     type="file"
                                     accept="image/*"
                                     className="hidden"

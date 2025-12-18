@@ -71,7 +71,7 @@ export function TweetCompose({ onPost }: TweetComposeProps) {
       setImageFile(null)
       setUploadedImageUrl(null)
       setAlert({ type: 'success', message: 'Post created successfully!' })
-      
+
       // Auto-hide success alert after 3 seconds
       setTimeout(() => setAlert(null), 3000)
     } catch (error) {
@@ -139,7 +139,7 @@ export function TweetCompose({ onPost }: TweetComposeProps) {
         </div>
       )}
       <div className="flex">
-        <div className="mr-4 flex-shrink-0">
+        <div className="mr-4 shrink-0">
           <Avatar>
             <AvatarImage src={user?.avatar || "https://github.com/shadcn.png"} alt={`@${user?.username}`} />
             <AvatarFallback>{user?.username?.[0]}</AvatarFallback>
@@ -148,14 +148,14 @@ export function TweetCompose({ onPost }: TweetComposeProps) {
         <div className="flex-1">
           <Textarea
             placeholder="What's happening?"
-            className="min-h-[100px] resize-none border-0 p-0 text-lg focus-visible:ring-0"
+            className="min-h-25 resize-none border-0 p-0 text-lg focus-visible:ring-0"
             value={content}
             onChange={(e) => setContent(e.target.value)}
           />
 
           {imagePreview && (
             <div className="relative mt-2 mb-4">
-              <LazyImage src={imagePreview} alt="Preview" className="rounded-2xl max-h-[300px] object-contain border" />
+              <LazyImage src={imagePreview} alt="Preview" className="rounded-2xl max-h-75 object-contain border" />
               <Button
                 variant="secondary"
                 size="icon"
@@ -170,6 +170,7 @@ export function TweetCompose({ onPost }: TweetComposeProps) {
           <div className="flex justify-between items-center pt-3 border-t dark:border-gray-800">
             <div className="flex space-x-2 text-sky-500">
               <input
+                title="file input"
                 type="file"
                 ref={fileInputRef}
                 className="hidden"

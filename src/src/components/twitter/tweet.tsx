@@ -68,12 +68,12 @@ export function Tweet({
     if (e.target instanceof Element && e.target.closest('.user-profile-link')) {
       return;
     }
-    
+
     if (id) {
       navigate(`/post/${id}`, { state: { murmur } });
     }
   }, [id, murmur, navigate])
-  
+
   const handleUserClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (murmur?.userId) {
@@ -85,7 +85,7 @@ export function Tweet({
   const user = useAppSelector((state) => state.auth.user)
   const [localIsLiked, setLocalIsLiked] = useState(false)
   const [likeCount, setLikeCount] = useState(likes)
-  
+
   // Use external isLiked prop if provided, otherwise use local state
   const isLiked = externalIsLiked !== undefined ? externalIsLiked : localIsLiked
   const [commentsList, setCommentsList] = useState<Comment[]>([])
@@ -95,7 +95,7 @@ export function Tweet({
   // Load like status on mount only if external isLiked is not provided
   useEffect(() => {
     if (externalIsLiked !== undefined || !id || !user) return
-    
+
     const loadLikeStatus = async () => {
       try {
         const status = await murmurAPI.getLikeStatus(id)
@@ -104,7 +104,7 @@ export function Tweet({
         console.error('Error loading like status:', error)
       }
     }
-    
+
     loadLikeStatus()
   }, [id, user, externalIsLiked])
 
@@ -112,7 +112,7 @@ export function Tweet({
     const date = new Date(dateString)
     const now = new Date()
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-    
+
     if (diffInSeconds < 60) return `${diffInSeconds}s`
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m`
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h`
@@ -152,14 +152,14 @@ export function Tweet({
 
     try {
       const result = await murmurAPI.toggleLike(id)
-      
+
       // Update local state or notify parent
       if (externalIsLiked !== undefined && onLikeChange) {
         onLikeChange(result.liked);
       } else {
         setLocalIsLiked(result.liked);
       }
-      
+
       setLikeCount(result.likeCount)
     } catch (error) {
       console.error('Error toggling like:', error)
@@ -201,7 +201,7 @@ export function Tweet({
 
   const handleDelete = useCallback(async () => {
     if (!id || !user) return;
-    
+
     try {
       await murmurAPI.deleteMurmur(id);
       toast.success("Post deleted successfully");
@@ -221,7 +221,7 @@ export function Tweet({
     <>
       <div className="border-b p-3 md:p-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors cursor-pointer" onClick={handleTweetClick}>
         <div className="flex gap-2 md:gap-4">
-          <div className="flex-shrink-0 user-profile-link" onClick={handleUserClick}>
+          <div className="shrink-0 user-profile-link" onClick={handleUserClick}>
             <Avatar className="h-10 w-10 md:h-12 md:w-12">
               <AvatarImage src={avatar || undefined} alt={username} />
               <AvatarFallback>{username.charAt(0).toUpperCase()}</AvatarFallback>
@@ -246,7 +246,7 @@ export function Tweet({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDelete();
@@ -259,12 +259,12 @@ export function Tweet({
                 </DropdownMenu>
               )}
             </div>
-            <div className="mt-1 mb-3 text-sm md:text-base break-words">
+            <div className="mt-1 mb-3 text-sm md:text-base wrap-break-word">
               {content}
             </div>
             {image && (
               <div className="mt-2 mb-3 rounded-2xl overflow-hidden border">
-                <LazyImage src={image} alt="Tweet attachment" className="w-full h-auto object-contain max-h-[500px]" />
+                <LazyImage src={image} alt="Tweet attachment" className="w-full h-auto object-contain max-h-125" />
               </div>
             )}
             <div className="flex justify-between max-w-md -ml-2">
@@ -277,7 +277,7 @@ export function Tweet({
                 <MessageCircle className="mr-1 h-4 w-4 md:h-5 md:w-5" />
                 <span className="text-xs md:text-sm">{formatNumber(commentCount)}</span>
               </Button>
-              
+
               <Button
                 variant="ghost"
                 size="sm"
@@ -287,8 +287,8 @@ export function Tweet({
                 <Heart className={`mr-1 h-4 w-4 md:h-5 md:w-5 ${isLiked ? 'fill-current' : ''}`} />
                 <span className="text-xs md:text-sm">{formatNumber(likeCount)}</span>
               </Button>
-             
-             
+
+
             </div>
           </div>
         </div>
