@@ -33,16 +33,6 @@ export function TwitterFeed({ type, newPost }: TwitterFeedProps) {
         }
     }, [newPost])
 
-    // Virtual scrolling optimization - only render visible tweets
-    const [visibleTweets, setVisibleTweets] = useState<Murmur[]>([])
-    const [startIndex, setStartIndex] = useState(0)
-    const VISIBLE_TWEET_COUNT = 10 // Only render 10 tweets at a time
-
-    useEffect(() => {
-        const endIndex = Math.min(startIndex + VISIBLE_TWEET_COUNT, tweets.length)
-        setVisibleTweets(tweets.slice(startIndex, endIndex))
-    }, [tweets, startIndex])
-
     const loadMoreTweets = useCallback(async () => {
         // Prevent multiple simultaneous requests
         if (isLoading || !hasMore || loadingBatchRef.current) return
@@ -126,8 +116,6 @@ export function TwitterFeed({ type, newPost }: TwitterFeedProps) {
 
             loadInitialBatch();
         }
-        // Reset virtual scrolling
-        setStartIndex(0);
         // Reset seen IDs when type changes
         seenIds.current.clear();
     }, [type, isInitialLoad]) // Reset when type changes
@@ -156,32 +144,7 @@ export function TwitterFeed({ type, newPost }: TwitterFeedProps) {
 
     const handleDelete = (deletedId: string) => {
         setTweets(prev => prev.filter(tweet => tweet.id !== deletedId));
-        // Also remove from visible tweets
-        setVisibleTweets(prev => prev.filter(tweet => tweet.id !== deletedId));
     };
-
-    // Handle scroll events for virtual scrolling
-    const handleScroll = useCallback(() => {
-        const container = document.querySelector('.overflow-y-auto');
-        if (!container) return;
-
-        const scrollTop = container.scrollTop;
-
-        // Calculate which tweets should be visible
-        const itemHeight = 150; // Approximate height of a tweet
-        const newIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - 5); // Buffer of 5 tweets
-
-        setStartIndex(newIndex);
-    }, []);
-
-    // Attach scroll listener
-    useEffect(() => {
-        const container = document.querySelector('.overflow-y-auto');
-        if (container) {
-            container.addEventListener('scroll', handleScroll);
-            return () => container.removeEventListener('scroll', handleScroll);
-        }
-    }, [handleScroll]);
 
     return (
         <div>
@@ -190,7 +153,7 @@ export function TwitterFeed({ type, newPost }: TwitterFeedProps) {
                 <FeedSkeleton />
             ) : (
                 <>
-                    {visibleTweets.map((murmur) => (
+                    {tweets.map((murmur) => (
                         <MemoizedTweet
                             key={murmur.id}
                             id={murmur.id}
