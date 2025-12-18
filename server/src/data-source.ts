@@ -7,8 +7,8 @@ export const dataSourceOptions: DataSourceOptions = {
     username: process.env.DB_USERNAME || 'docker',
     password: process.env.DB_PASSWORD || 'docker',
     database: process.env.DB_DATABASE || 'test',
-    entities: ['src/**/*.entity.ts'],
-    migrations: ['src/migrations/*.ts'],
+    entities: ['dist/**/*.entity.js'], // Use compiled JS files
+    migrations: ['dist/migrations/*.js'],
     migrationsTableName: 'migrations',
     synchronize: false,
     logging: false,
@@ -18,6 +18,11 @@ export const dataSourceOptions: DataSourceOptions = {
         queueLimit: 0,
     }
 };
+
+// Export a function to create a new DataSource instance
+export function createDataSource(): DataSource {
+    return new DataSource(dataSourceOptions);
+}
 
 const dataSource = new DataSource(dataSourceOptions);
 
